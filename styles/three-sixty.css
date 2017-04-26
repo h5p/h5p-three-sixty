@@ -1,5 +1,11 @@
 .h5p-three-sixty {
-  color: #BadA55;
+  position: relative;
+  color: #212121;
+}
+.h5p-three-sixty-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 .h5p-three-sixty-controls {
   cursor: move;
