@@ -8,9 +8,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @param {DOMElement} sourceElement video or image source
    * @param {Object} sourceSize Actualy size of the media displayed
    * @param {Object} viewSize Size of the viewport
-   * @param {boolean} [sourceLive] Update source texture on each render
+   * @param {Function} [sourceNeedsUpdate] Determines if the source texture needs to be rerendered.
    */
-  function ThreeSixty(sourceElement, sourceSize, viewSize, sourceLive) {
+  function ThreeSixty(sourceElement, sourceSize, viewSize, sourceNeedsUpdate) {
     /** @alias H5P.ThreeSixty# */
     var self = this;
 
@@ -25,37 +25,26 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(fieldOfView, viewSize.width / viewSize.height, 0.1, 1000);
     camera.rotation.order = 'YXZ';
-    camera.rotation.y = -Math.PI/2;
+    camera.rotation.y = Math.PI/2;
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(viewSize.width, viewSize.height);
 
     // Make main canvas element public
     self.element = renderer.domElement;
 
-    // Create a canvas for drawing the source on
-    var sourceCanvas = document.createElement('canvas');
-  	sourceCanvas.width = sourceSize.width;
-  	sourceCanvas.height = sourceSize.height;
-  	var sourceCanvasContext = sourceCanvas.getContext('2d');
-
-    // Flip(mirror) the texture
-    sourceCanvasContext.translate(sourceSize.width, 0);
-    sourceCanvasContext.scale(-1, 1);
-
     // Create texture from source canvas
-    var sourceTexture = new THREE.Texture(sourceCanvas, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
+    var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
 
     // Create a sphere surrounding the camera with the source texture
-    var geometry = new THREE.SphereGeometry(32, 32, 32);
-    var material = new THREE.MeshPhongMaterial({
+    var geometry = new THREE.SphereGeometry(50, 16, 12);
+    var material = new THREE.MeshBasicMaterial({
       map: sourceTexture,
-      side: THREE.BackSide // Draw source inside sphere
+      side: THREE.FrontSide
     });
-    var sphere = new THREE.Mesh(geometry, material);
-    scene.add(sphere);
 
-    // Turn the light all they way up
-    scene.add(new THREE.AmbientLight(0xFFFFFF));
+    var sphere = new THREE.Mesh(geometry, material);
+    sphere.scale.x = -1; // Flip to make front side face inwards
+    scene.add(sphere);
 
     // Start position and last position for rotating the sphere
     var startPos, lastPos = {x: camera.rotation.y, y: camera.rotation.x};
@@ -145,19 +134,22 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      */
     var render = function () {
-  	  requestAnimationFrame(render);
 
-      sourceCanvasContext.drawImage(sourceElement, 0, 0, sourceSize.width, sourceSize.height);
-      if (sourceLive === true) {
+      if (sourceNeedsUpdate !== undefined && sourceNeedsUpdate(sourceElement)) {
         sourceTexture.needsUpdate = true;
       }
 
-	    renderer.render(scene, camera);
+      // Draw scenes
+      renderer.render(scene, camera);
       cssRenderer.render(cssScene, camera);
+
+      // Prepare next render
+      requestAnimationFrame(render);
     }
 
     // Register mousedown handler
     self.cssElement.addEventListener('mousedown', downHandler, false);
+    self.cssElement.classList.add('h5p-three-sixty-controls');
 
     // Start rendering
     render();

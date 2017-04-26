@@ -1,3 +1,15 @@
 .h5p-three-sixty {
   color: #BadA55;
 }
+.h5p-three-sixty-controls {
+  cursor: move;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  user-select:none;
+}
+.h5p-three-sixty-controls:active {
+  cursor: grabbing;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
+}
