@@ -63,20 +63,28 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var cssRenderer = add(new THREE.CSS3DRenderer());
 
     /**
-     * Add element to "CSS world"
+     * Add element to "CSS 3d world"
+     *
      * @param {DOMElement} element
+     * @param {Object} startPosition
+     * @param {boolean} enableControls
      */
-    self.add = function (element) {
+    self.add = function (element, startPosition, enableControls) {
       var threeElement = new THREE.CSS3DObject(element);
 
+      // Reset HUD values
       element.style.left = 0;
       element.style.top = 0;
 
       /**
+       * Set the element's position in the 3d world, always facing the camera.
+       *
        * @private
+       * @param {number} yaw Radians from 0 to Math.PI*2 (0-360)
+       * @param {number} pitch Radians from -Math.PI/2 to Math.PI/2 (-90-90)
        */
       var setElementPosition = function (yaw, pitch) {
-        var radius = 500;
+        var radius = 800;
 
         threeElement.position.x = radius * Math.sin(yaw) * Math.cos(pitch);
         threeElement.position.y = radius * Math.sin(pitch);
@@ -87,13 +95,32 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         threeElement.rotation.x = pitch;
       };
 
-      var elementControls = new PositionControls(element);
-      elementControls.on('move', function (event) {
-        setElementPosition(event.data.yaw, -event.data.pitch);
-      });
+      if (enableControls) {
+        var elementControls = new PositionControls(element, startPosition);
+
+        // Relay and supplement startMoving event
+        elementControls.on('startMoving', function (event) {
+          event.data.element = element;
+          self.trigger(event);
+        });
+
+        // Update element position according to movement
+        elementControls.on('move', function (event) {
+          setElementPosition(event.data.yaw, event.data.pitch);
+        });
+
+        // Relay and supplement stopMoving event
+        elementControls.on('stopMoving', function (event) {
+          event.data = {
+            yaw: -threeElement.rotation.y,
+            pitch: threeElement.rotation.x
+          };
+          self.trigger(event);
+        });
+      }
 
       // Set initial position
-      setElementPosition(0, 0);
+      setElementPosition(startPosition.yaw, startPosition.pitch);
 
       cssScene.add(threeElement);
       return threeElement;
@@ -105,6 +132,18 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.remove = function (threeElement) {
       cssScene.remove(threeElement);
+    }
+
+    /**
+     * Get the position the camera is currently pointing at
+     *
+     * @return {Object}
+     */
+    self.getCurrentPosition = function () {
+      return {
+        yaw: -camera.rotation.y,
+        pitch: camera.rotation.x
+      }
     }
 
     /**
@@ -141,14 +180,28 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     }
 
     // Add camera controls
-    var cameraControls = new PositionControls(cssRenderer.domElement, 400, {yaw: camera.rotation.y, pitch: camera.rotation.x});
+    var cameraControls = new PositionControls(cssRenderer.domElement, {yaw: camera.rotation.y, pitch: camera.rotation.x}, 400);
+
+    // Relay camera move start
+    cameraControls.on('startMoving', function (event) {
+      self.trigger(event);
+    });
+
+    // Rotate camera as controls move
     cameraControls.on('move', function (event) {
       camera.rotation.y = event.data.yaw;
-      camera.rotation.x = event.data.pitch;
+      camera.rotation.x = -event.data.pitch;
     });
+
+    // Relay camera move stop
+    cameraControls.on('stopMoving', function (event) {
+      self.trigger(event);
+    });
+
+    // Add approperiate styling
     cssRenderer.domElement.classList.add('h5p-three-sixty-controls');
 
-    // Start rendering
+    // Start rendering loop
     render();
   }
 
@@ -158,8 +211,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
   /**
    * @param {THREE.Object3D} element
+   * @param {Object} [startPosition]
+   * @param {number} [mouseSpeed]
    */
-  function PositionControls(element, mouseSpeed, startPosition) {
+  function PositionControls(element, startPosition, mouseSpeed) {
     /** @type PositionControls# */
     var self = this;
 
@@ -190,6 +245,15 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return; // Only react to left click
       }
 
+      // Give others a chance to prevent the moving
+      var data = {
+        preventAction: false
+      };
+      self.trigger('startMoving', data);
+      if (data.preventAction) {
+        return; // Another component doesn't want us to move
+      }
+
       // Prevent other elements moving
       event.stopPropagation();
 
@@ -199,7 +263,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Register mouse move and up handlers
       window.addEventListener('mousemove', moveHandler, false);
       window.addEventListener('mouseup', upHandler, false);
-    }
+    };
     element.addEventListener('mousedown', downHandler, false);
 
     /**
@@ -209,9 +273,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var moveHandler = function (event) {
+
       // Update position relative to cursor speed
       currentPosition.yaw = startPosition.yaw + ((event.pageX - fromPosition.x) / mouseSpeed);
-      currentPosition.pitch = startPosition.pitch + ((event.pageY - fromPosition.y) / mouseSpeed);
+      currentPosition.pitch = startPosition.pitch - ((event.pageY - fromPosition.y) / mouseSpeed);
 
       // Max 90 degrees up and down on pitch
       var ninety = Math.PI / 2;
@@ -223,7 +288,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
 
       self.trigger('move', currentPosition);
-    }
+    };
 
     /**
      * Handle mouse up
@@ -236,7 +301,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       startPosition = {yaw: currentPosition.yaw, pitch: currentPosition.pitch};
       window.removeEventListener('mousemove', moveHandler, false);
       window.removeEventListener('mouseup', upHandler, false);
-    }
+
+      self.trigger('stopMoving');
+    };
   }
 
   return ThreeSixty;

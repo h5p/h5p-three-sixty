@@ -12,10 +12,13 @@
   cursor: grab;
   cursor: -moz-grab;
   cursor: -webkit-grab;
-  user-select:none;
+  user-select: none;
 }
 .h5p-three-sixty-controls:active {
   cursor: grabbing;
   cursor: -moz-grabbing;
   cursor: -webkit-grabbing;
+}
+.h5p-three-sixty-controls img {
+  -webkit-user-drag: none;
 }
