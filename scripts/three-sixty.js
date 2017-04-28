@@ -42,6 +42,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     camera.rotation.y = Math.PI/2;
     var renderer = add(new THREE.WebGLRenderer());
 
+    var effect = new THREE.StereoEffect(renderer);
+    effect.eyeSeparation = 10;
+
     // Create texture from source canvas
     var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
 
@@ -60,7 +63,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var cssScene = new THREE.Scene();
 
     // Create a renderer for our "CSS world"
-    var cssRenderer = add(new THREE.CSS3DRenderer());
+    //var cssRenderer = add(new THREE.CSS3DRenderer());
+    var cssRenderer = add(new THREE.CSS3DStereoRenderer());
+
+
 
     /**
      * Add element to "CSS 3d world"
@@ -75,6 +81,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Reset HUD values
       element.style.left = 0;
       element.style.top = 0;
+element.remove();
 
       /**
        * Set the element's position in the 3d world, always facing the camera.
@@ -158,7 +165,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       self.element.style.height = (self.element.clientWidth / ratio) + 'px';
 
       // Resize renderers
-      renderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      //renderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      effect.setSize(self.element.clientWidth, self.element.clientHeight);
       cssRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
     }
 
@@ -172,7 +180,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
 
       // Draw scenes
-      renderer.render(scene, camera);
+      //renderer.render(scene, camera);
+      effect.render(scene, camera);
       cssRenderer.render(cssScene, camera);
 
       // Prepare next render
