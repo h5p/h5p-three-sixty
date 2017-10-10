@@ -32,7 +32,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var add = function (renderer) {
       renderer.domElement.classList.add('h5p-three-sixty-scene');
       self.element.appendChild(renderer.domElement);
-      return renderer
+      return renderer;
     };
 
     // Create scene, add camera and a WebGL renderer
@@ -124,7 +124,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       cssScene.add(threeElement);
       return threeElement;
-    }
+    };
 
     /**
      * Remove element from "CSS world"
@@ -132,7 +132,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.remove = function (threeElement) {
       cssScene.remove(threeElement);
-    }
+    };
 
     /**
      * Get the position the camera is currently pointing at
@@ -143,8 +143,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       return {
         yaw: -camera.rotation.y,
         pitch: camera.rotation.x
-      }
-    }
+      };
+    };
 
     /**
      * Give new size
@@ -160,14 +160,17 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Resize renderers
       renderer.setSize(self.element.clientWidth, self.element.clientHeight);
       cssRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
-    }
+    };
+
+    var hasFirstRender;
 
     /**
      * @private
      */
     var render = function () {
 
-      if (sourceNeedsUpdate !== undefined && sourceNeedsUpdate(sourceElement)) {
+      if (!hasFirstRender || sourceNeedsUpdate !== undefined && sourceNeedsUpdate(sourceElement)) {
+        hasFirstRender = true;
         sourceTexture.needsUpdate = true;
       }
 
@@ -177,7 +180,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Prepare next render
       requestAnimationFrame(render);
-    }
+    };
 
     // Add camera controls
     var cameraControls = new PositionControls(cssRenderer.domElement, {yaw: camera.rotation.y, pitch: camera.rotation.x}, 400);
