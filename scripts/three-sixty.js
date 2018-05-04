@@ -48,6 +48,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, 0.1, 1000);
     camera.rotation.order = 'YXZ';
 
+    // TODO: Fix hardcoded values
+    camera.rotation.y = -0.99;
+    camera.rotation.x = -0.14579632679489646;
+
     var renderer = add(new THREE.WebGLRenderer());
 
     // Create texture from source canvas
@@ -294,7 +298,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add device orientation controls
-    window.addEventListener('deviceorientation', deviceOrientation, false);
+    // TODO: Fix
+    // window.addEventListener('deviceorientation', deviceOrientation, false);
   }
 
   // Extends the event dispatcher
