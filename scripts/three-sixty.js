@@ -1,7 +1,5 @@
 H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
-  var debugText; // TODO: Remove
-
   /**
    * Convert deg to rad
    * @return {number}
@@ -27,7 +25,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     EventDispatcher.call(self);
 
     // Settings
-    var fieldOfView = 45;
+    var fieldOfView = 75;
 
     // Main wrapper element
     self.element = document.createElement('div');
@@ -49,13 +47,18 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, 0.1, 1000);
     camera.rotation.order = 'YXZ';
+
+    // TODO: Fix hardcoded values
+    camera.rotation.y = -0.99;
+    camera.rotation.x = -0.14579632679489646;
+
     var renderer = add(new THREE.WebGLRenderer());
 
     // Create texture from source canvas
     var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
 
     // Create a sphere surrounding the camera with the source texture
-    var geometry = new THREE.SphereGeometry(50, 16, 12);
+    var geometry = new THREE.SphereGeometry(500, 60, 40);
     var material = new THREE.MeshBasicMaterial({
       map: sourceTexture,
       side: THREE.FrontSide
@@ -70,6 +73,15 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Create a renderer for our "CSS world"
     var cssRenderer = add(new THREE.CSS3DRenderer());
+
+    self.startRendering = function () {
+      self.isRendering = true;
+      render();
+    };
+
+    self.stopRendering = function () {
+      self.isRendering = false;
+    };
 
     /**
      * Add element to "CSS 3d world"
@@ -184,6 +196,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      */
     var render = function () {
+      if (!self.isRendering) {
+        return;
+      }
 
       if (!hasFirstRender || sourceNeedsUpdate !== undefined && sourceNeedsUpdate(sourceElement)) {
         hasFirstRender = true;
@@ -228,15 +243,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Add approperiate styling
     cssRenderer.domElement.classList.add('h5p-three-sixty-controls');
 
-    // Text for printing debug messages
-    // TODO: Remove
-    debugText = document.createElement('div');
-    debugText.classList.add('debug-text');
-    debugText.innerText = window.orientation || 0;
-    self.element.appendChild(debugText);
-
     var preventDeviceOrientation;
-    var qOrientation, qNinety, euler, xVector, zVector;
+    var qOrientation, qMovement, qNinety, euler, xVector, zVector;
 
     /**
      * Handle screen orientation change by compensating camera
@@ -245,8 +253,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     var setOrientation = function () {
       qOrientation.setFromAxisAngle(zVector, toRad(-(window.orientation || 0)));
-
-      debugText.innerText = window.orientation || 0; // TODO: remove
     };
 
     /**
@@ -279,10 +285,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
 
       if (preventDeviceOrientation) {
-        debugText.innerText = 'Stopped';
         return;
       }
-      debugText.innerText = 'Running';
 
       // Adjust camera to reflect device movement
       euler.set(toRad(event.beta), toRad(event.alpha) + cameraControls.getAlpha(), toRad(-event.gamma), 'YXZ');
@@ -294,10 +298,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add device orientation controls
-    window.addEventListener('deviceorientation', deviceOrientation, false);
-
-    // Start rendering loop
-    render();
+    // TODO: Fix
+    // window.addEventListener('deviceorientation', deviceOrientation, false);
   }
 
   // Extends the event dispatcher
