@@ -51,6 +51,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // TODO: Fix hardcoded values
     camera.rotation.y = -0.99;
     camera.rotation.x = -0.14579632679489646;
+    const radius = 1;
+    const segmentation = 128;
 
     var renderer = add(new THREE.WebGLRenderer());
 
@@ -58,7 +60,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
 
     // Create a sphere surrounding the camera with the source texture
-    var geometry = new THREE.SphereGeometry(500, 60, 40);
+    var geometry = new THREE.SphereGeometry(radius, segmentation, segmentation);
     var material = new THREE.MeshBasicMaterial({
       map: sourceTexture,
       side: THREE.FrontSide
