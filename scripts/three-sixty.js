@@ -8,6 +8,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     return value * (Math.PI / 180);
   };
 
+  const maxPitch = Math.PI / 2;
+
   /**
    * The 360 degree panorama viewer with support for virtual reality.
    *
@@ -25,7 +27,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     EventDispatcher.call(self);
 
     // Settings
-    var fieldOfView = 75;
+    const fieldOfView = 75;
+    const near = 0.1;
+    const far = 100;
 
     // Main wrapper element
     self.element = document.createElement('div');
@@ -45,13 +49,13 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Create scene, add camera and a WebGL renderer
     var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, 0.1, 1000);
+    var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, near, far);
     camera.rotation.order = 'YXZ';
 
     // TODO: Fix hardcoded values
     camera.rotation.y = -0.99;
     camera.rotation.x = -0.14579632679489646;
-    const radius = 1;
+    const radius = 10;
     const segmentation = 128;
 
     var renderer = add(new THREE.WebGLRenderer());
@@ -83,6 +87,11 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     self.stopRendering = function () {
       self.isRendering = false;
+    };
+
+    self.setStartCamera = function (cameraOptions) {
+      camera.rotation.x = cameraOptions.pitch;
+      camera.rotation.y = -cameraOptions.yaw;
     };
 
     /**
@@ -176,6 +185,14 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       };
     };
 
+    self.getCurrentFov = function () {
+      return camera.getEffectiveFOV();
+    };
+
+    self.getElement = function () {
+      return self.element;
+    };
+
     /**
      * Give new size
      */
@@ -232,8 +249,22 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Rotate camera as controls move
     cameraControls.on('move', function (event) {
-      camera.rotation.y = cameraControls.startY + event.alphaDelta;
-      camera.rotation.x = cameraControls.startX + event.betaDelta;
+      let yaw = cameraControls.startY + event.alphaDelta;
+      let pitch = cameraControls.startX + event.betaDelta;
+
+      // Set outer bounds for camera so it does not loop around.
+      // It can max see max 90 degrees up and down
+      const radsFromCameraCenter = toRad(fieldOfView) / 2;
+      if (pitch + radsFromCameraCenter > maxPitch) {
+        pitch = maxPitch - radsFromCameraCenter;
+      }
+      else if (pitch - radsFromCameraCenter < -maxPitch) {
+        pitch = -maxPitch + radsFromCameraCenter;
+      }
+
+      // Allow infinite yaw rotations
+      camera.rotation.y = yaw;
+      camera.rotation.x = pitch;
     });
 
     // Relay camera movement stopped event
