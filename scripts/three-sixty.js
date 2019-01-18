@@ -35,6 +35,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     self.element = document.createElement('div');
     self.element.classList.add('h5p-three-sixty');
 
+    self.threeElements = [];
+
     /**
      * Help set up renderers and add them to the main wrapper element.
      *
@@ -103,6 +105,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.add = function (element, startPosition, enableControls) {
       var threeElement = new THREE.CSS3DObject(element);
+      self.threeElements.push(threeElement);
+      const threeElementIndex = self.threeElements.length - 1;
 
       // Reset HUD values
       element.style.left = 0;
@@ -149,6 +153,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         // Relay and supplement stopMoving event
         elementControls.on('movestop', function (event) {
           event.data = {
+            elementIndex: threeElementIndex,
             yaw: -threeElement.rotation.y,
             pitch: threeElement.rotation.x
           };
