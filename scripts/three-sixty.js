@@ -178,6 +178,14 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       cssScene.remove(threeElement);
     };
 
+    self.removeElements = function () {
+      self.threeElements.forEach(function (threeElement) {
+        self.remove(threeElement);
+      });
+
+      self.threeElements = [];
+    };
+
     /**
      * Get the position the camera is currently pointing at
      *
