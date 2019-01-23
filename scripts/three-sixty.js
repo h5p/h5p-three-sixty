@@ -16,10 +16,14 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @class H5P.ThreeSixty
    * @extends H5P.EventDispatcher
    * @param {DOMElement} sourceElement video or image source
-   * @param {number} ratio Display ratio of the viewport
+   * @param {Object} options
+   * @param {number} options.ratio Display ratio of the viewport
+   * @param {Object} options.cameraStartPosition
+   * @param {number} options.cameraStartPosition.yaw
+   * @param {number} options.cameraStartPosition.pitch
    * @param {Function} [sourceNeedsUpdate] Determines if the source texture needs to be rerendered.
    */
-  function ThreeSixty(sourceElement, ratio, sourceNeedsUpdate) {
+  function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
     /** @alias H5P.ThreeSixty# */
     var self = this;
 
@@ -30,6 +34,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     const fieldOfView = 75;
     const near = 0.1;
     const far = 100;
+    let ratio = options.ratio ? options.ratio : 16 / 9;
 
     // Main wrapper element
     self.element = document.createElement('div');
@@ -54,9 +59,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, near, far);
     camera.rotation.order = 'YXZ';
 
-    // TODO: Fix hardcoded values
-    camera.rotation.y = -0.99;
-    camera.rotation.x = -0.14579632679489646;
+    const camPos = options.cameraStartPosition || {};
+    camera.rotation.y = camPos.yaw !== undefined ? camPos.yaw : 0;
+    camera.rotation.x = camPos.pitch !== undefined ? camPos.pitch : 0;
     const radius = 10;
     const segmentation = 128;
 
