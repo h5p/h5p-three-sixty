@@ -156,13 +156,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         });
 
         // Relay and supplement stopMoving event
-        elementControls.on('movestop', function (event) {
+        elementControls.on('movestop', function (event) {
           event.data = {
             elementIndex: threeElementIndex,
             yaw: -threeElement.rotation.y,
             pitch: threeElement.rotation.x
           };
-          console.log(event.data);
           preventDeviceOrientation = false;
           self.trigger(event);
         });
