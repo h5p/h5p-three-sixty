@@ -19,8 +19,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @param {Object} options
    * @param {number} options.ratio Display ratio of the viewport
    * @param {Object} options.cameraStartPosition
-   * @param {number} options.cameraStartPosition.yaw
-   * @param {number} options.cameraStartPosition.pitch
+   * @param {number} options.cameraStartPosition.yaw 0 = Center of image
+   * @param {number} options.cameraStartPosition.pitch 0 = Center of image
    * @param {Function} [sourceNeedsUpdate] Determines if the source texture needs to be rerendered.
    */
   function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
@@ -60,8 +60,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     camera.rotation.order = 'YXZ';
 
     const camPos = options.cameraStartPosition || {};
-    camera.rotation.y = camPos.yaw !== undefined ? camPos.yaw : 0;
-    camera.rotation.x = camPos.pitch !== undefined ? camPos.pitch : 0;
+    // The default center of an equirectangular image is usually 1/4 or 90 degrees from the image's left edge
+    camera.rotation.y = (camPos.yaw !== undefined ? camPos.yaw + Math.PI : Math.PI) % (Math.PI * 2); // To make it easier on the parameters we map 0 to the center (2PI is max)
+    camera.rotation.x = (camPos.pitch !== undefined ? camPos.pitch : 0) % (Math.PI * 2); // 0 is already center (2PI is max)
     const radius = 10;
     const segmentation = 128;
 
@@ -87,18 +88,19 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Create a renderer for our "CSS world"
     var cssRenderer = add(new THREE.CSS3DRenderer());
 
+    /**
+     * TODO
+     */
     self.startRendering = function () {
       self.isRendering = true;
       render();
     };
 
+    /**
+     * TODO
+     */
     self.stopRendering = function () {
       self.isRendering = false;
-    };
-
-    self.setStartCamera = function (cameraOptions) {
-      camera.rotation.x = cameraOptions.pitch;
-      camera.rotation.y = -cameraOptions.yaw;
     };
 
     /**
