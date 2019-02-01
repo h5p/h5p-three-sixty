@@ -9,6 +9,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
   };
 
   const maxPitch = Math.PI / 2;
+  const pi2 = Math.PI * 2;
 
   /**
    * The 360 degree panorama viewer with support for virtual reality.
@@ -54,15 +55,32 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       return renderer;
     };
 
+    /**
+     * Set the current camera position.
+     *
+     * The default center of an equirectangular image is usually 1/4 or
+     * 90 degrees from the image's left edge.
+     *
+     * @param {number} yaw Horizontal angle
+     * @param {number} pitch Vertical angle
+     */
+    self.setCameraPosition = function (yaw, pitch) {
+      // To make it easier on the parameters we map 0 to the center (2PI is max)
+      camera.rotation.y = (Math.abs(yaw) + Math.PI) % pi2;
+      // 0 is already center (2PI is max)
+      camera.rotation.x = Math.abs(pitch) % pi2;
+    };
+
     // Create scene, add camera and a WebGL renderer
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(fieldOfView, ratio, near, far);
     camera.rotation.order = 'YXZ';
 
     const camPos = options.cameraStartPosition || {};
-    // The default center of an equirectangular image is usually 1/4 or 90 degrees from the image's left edge
-    camera.rotation.y = (camPos.yaw !== undefined ? camPos.yaw + Math.PI : Math.PI) % (Math.PI * 2); // To make it easier on the parameters we map 0 to the center (2PI is max)
-    camera.rotation.x = (camPos.pitch !== undefined ? camPos.pitch : 0) % (Math.PI * 2); // 0 is already center (2PI is max)
+    self.setCameraPosition(
+      camPos.yaw !== undefined ? camPos.yaw : 0,
+      camPos.pitch !== undefined ? camPos.pitch : 0
+    );
     const radius = 10;
     const segmentation = 128;
 
@@ -184,6 +202,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       cssScene.remove(threeElement);
     };
 
+    /**
+     * TODO
+     */
     self.removeElements = function () {
       self.threeElements.forEach(function (threeElement) {
         self.remove(threeElement);
@@ -199,15 +220,21 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.getCurrentPosition = function () {
       return {
-        yaw: -camera.rotation.y,
+        yaw: (camera.rotation.y + Math.PI) % pi2,
         pitch: camera.rotation.x
       };
     };
 
+    /**
+     * TODO
+     */
     self.getCurrentFov = function () {
       return camera.getEffectiveFOV();
     };
 
+    /**
+     * TODO
+     */
     self.getElement = function () {
       return self.element;
     };
@@ -279,6 +306,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
       else if (pitch - radsFromCameraCenter < -maxPitch) {
         pitch = -maxPitch + radsFromCameraCenter;
+      }
+
+      // Keep yaw between 0 and 2PI
+      yaw %= pi2;
+      if (yaw < 0) { // Reset when passing 0
+        yaw += pi2;
       }
 
       // Allow infinite yaw rotations
@@ -436,7 +469,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Update position relative to cursor speed
       moveEvent.alphaDelta = (x - startPosition.x) / f;
       moveEvent.betaDelta = (y - startPosition.y) / f;
-      alpha = (startAlpha + moveEvent.alphaDelta) % (Math.PI * 2); // Max 360
+      alpha = (startAlpha + moveEvent.alphaDelta) % pi2; // Max 360
       beta = (startBeta - moveEvent.betaDelta) % Math.PI; // Max 180
 
       // Max 90 degrees up and down on pitch  TODO: test
