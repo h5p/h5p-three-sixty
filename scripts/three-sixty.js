@@ -22,6 +22,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @param {Object} options.cameraStartPosition
    * @param {number} options.cameraStartPosition.yaw 0 = Center of image
    * @param {number} options.cameraStartPosition.pitch 0 = Center of image
+   * @param {number} options.segments
    * @param {Function} [sourceNeedsUpdate] Determines if the source texture needs to be rerendered.
    */
   function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
@@ -82,23 +83,28 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       camPos.pitch !== undefined ? camPos.pitch : 0
     );
     const radius = 10;
-    const segmentation = 128;
-
-    var renderer = add(new THREE.WebGLRenderer());
+    const segmentation = options.segments || 4;
 
     // Create texture from source canvas
     var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
+    var geometry;
+    var sphere;
 
-    // Create a sphere surrounding the camera with the source texture
-    var geometry = new THREE.SphereGeometry(radius, segmentation, segmentation);
-    var material = new THREE.MeshBasicMaterial({
-      map: sourceTexture,
-      side: THREE.FrontSide
-    });
+    var createSphere = function (segments) {
+      // Create a sphere surrounding the camera with the source texture
+      geometry = new THREE.SphereGeometry(radius, segments, segments);
+      var material = new THREE.MeshBasicMaterial({
+        map: sourceTexture,
+        side: THREE.FrontSide
+      });
 
-    var sphere = new THREE.Mesh(geometry, material);
-    sphere.scale.x = -1; // Flip to make front side face inwards
-    scene.add(sphere);
+      sphere = new THREE.Mesh(geometry, material);
+      sphere.scale.x = -1; // Flip to make front side face inwards
+      scene.add(sphere);
+    };
+
+    createSphere(segmentation);
+    var renderer = add(new THREE.WebGLRenderer());
 
     // Create a scene for our "CSS world"
     var cssScene = new THREE.Scene();
@@ -119,6 +125,16 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.stopRendering = function () {
       self.isRendering = false;
+    };
+
+    self.setStartCamera = function (cameraOptions) {
+      camera.rotation.x = cameraOptions.pitch;
+      camera.rotation.y = -cameraOptions.yaw;
+    };
+
+    self.setRenderingQuality = function (segmentation) {
+      scene.remove(sphere);
+      createSphere(segmentation);
     };
 
     /**
