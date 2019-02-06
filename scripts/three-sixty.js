@@ -81,7 +81,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     const camPos = options.cameraStartPosition || {};
     self.setCameraPosition(
-      camPos.yaw !== undefined ? camPos.yaw : 0,
+      camPos.yaw !== undefined ? camPos.yaw : -(Math.PI * (2/3)),
       camPos.pitch !== undefined ? camPos.pitch : 0
     );
     const radius = 10;
