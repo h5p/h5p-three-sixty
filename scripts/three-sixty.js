@@ -66,10 +66,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {number} pitch Vertical angle
      */
     self.setCameraPosition = function (yaw, pitch) {
-      // To make it easier on the parameters we map 0 to the center (2PI is max)
-      camera.rotation.y = (Math.abs(yaw) + Math.PI) % pi2;
-      // 0 is already center (2PI is max)
-      camera.rotation.x = Math.abs(pitch) % pi2;
+      camera.rotation.y = -yaw;
+      camera.rotation.x = pitch;
+      self.trigger('movestop', {
+        pitch: pitch,
+        yaw: yaw,
+      });
     };
 
     // Create scene, add camera and a WebGL renderer
@@ -125,11 +127,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.stopRendering = function () {
       self.isRendering = false;
-    };
-
-    self.setStartCamera = function (cameraOptions) {
-      camera.rotation.x = cameraOptions.pitch;
-      camera.rotation.y = -cameraOptions.yaw;
     };
 
     self.setRenderingQuality = function (segmentation) {
@@ -236,7 +233,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.getCurrentPosition = function () {
       return {
-        yaw: (camera.rotation.y + Math.PI) % pi2,
+        yaw: -camera.rotation.y,
         pitch: camera.rotation.x
       };
     };
