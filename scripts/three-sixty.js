@@ -531,9 +531,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return; // Prevented by another component
       }
 
-      // Prevent other elements from moving
-      event.stopPropagation();
-
       // Register mouse move and up handlers
       window.addEventListener('mousemove', mouseMove, false);
       window.addEventListener('mouseup', mouseUp, false);
