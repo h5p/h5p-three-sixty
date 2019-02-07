@@ -66,6 +66,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {number} pitch Vertical angle
      */
     self.setCameraPosition = function (yaw, pitch) {
+      if (preventDeviceOrientation) {
+        return; // Prevent other codes from setting position while the user is dragging
+      }
       camera.rotation.y = -yaw;
       camera.rotation.x = pitch;
       self.trigger('movestop', {
@@ -292,7 +295,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add camera controls
-    var cameraControls = new PositionControls(cssRenderer.domElement, 400);
+    var cameraControls = new PositionControls(cssRenderer.domElement, 400, true);
 
     // Camera starts moving handler
     cameraControls.on('movestart', function (event) {
@@ -410,8 +413,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @class
    * @param {THREE.Object3D} element
    * @param {number} [friction] Determines the speed of the movement
+   * @param {number} [invert] Needed to invert controls for camera
    */
-  function PositionControls(element, friction) {
+  function PositionControls(element, friction, invert) {
     /** @type PositionControls# */
     var self = this;
 
@@ -422,6 +426,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     if (!friction) {
       friction = 800; // Higher = slower
     }
+    invert = invert ? 1 : -1;
 
     var alpha = 0; // From 0 to 2pi
     var beta = 0; // From -pi/2 to pi/2
@@ -596,6 +601,73 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       end();
     };
 
+    let keyStillDown = null;
+    const keyScroller = {
+      x: 0,
+      y: 0
+    };
+
+    /**
+     * Handle touch start
+     *
+     * @private
+     * @param {TouchEvent} event
+     */
+    var keyDown = function (event) {
+      if ([37, 100, 38, 104, 39, 102, 40, 98].indexOf(event.which) === -1) {
+        return; // Not an arrow key
+      }
+
+      if (keyStillDown === null) {
+        // Try to start movement
+        if (start(keyScroller.x, keyScroller.y)) {
+          keyStillDown = event.which;
+          element.addEventListener('keyup', keyUp, false);
+        }
+      }
+
+      // Prevent the default behavior
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (keyStillDown !== event.which) {
+        return; // Not the same key as we started with
+      }
+
+      // Update movement in approperiate direction
+      switch (event.which) {
+        case 37:
+        case 100:
+          keyScroller.x += invert;
+          break;
+        case 38:
+        case 104:
+          keyScroller.y += invert;
+          break;
+        case 39:
+        case 102:
+          keyScroller.x -= invert;
+          break;
+        case 40:
+        case 98:
+          keyScroller.y -= invert;
+          break;
+      }
+      move(keyScroller.x, keyScroller.y, friction * 0.025);
+    };
+
+    /**
+     * Handle touch end
+     *
+     * @private
+     * @param {TouchEvent} event
+     */
+    var keyUp = function (event) {
+      keyStillDown = null;
+      element.removeEventListener('keyup', keyUp, false);
+      end();
+    };
+
     /**
      * @return {number}
      */
@@ -620,6 +692,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Register event listeners to position element
     element.addEventListener('mousedown', mouseDown, false);
     element.addEventListener('touchstart', touchStart, false);
+    element.addEventListener('keydown', keyDown, false);
+    element.tabIndex = '0';
   }
 
   return ThreeSixty;
