@@ -59,8 +59,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     /**
      * Set the current camera position.
      *
-     * The default center of an equirectangular image is usually 1/4 or
-     * 90 degrees from the image's left edge.
+     * The default center/front part of an equirectangular image is usually
+     * the center of image.
      *
      * @param {number} yaw Horizontal angle
      * @param {number} pitch Vertical angle
