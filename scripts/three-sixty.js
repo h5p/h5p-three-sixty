@@ -57,6 +57,33 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
+     * Set the label for the application element (camera controls).
+     * Needed to be compatible with assitive tools.
+     *
+     * @param {string} label
+     */
+    self.setAriaLabel = function (label) {
+      cssRenderer.domElement.setAttribute('aria-label', label);
+      cssRenderer.domElement.firstChild.setAttribute('aria-role', 'document'); // TODO: Separate setting?
+    };
+
+    /**
+     * Set focus to the scene.
+     */
+    self.focus = function () {
+      cssRenderer.domElement.focus();
+    };
+
+    /**
+     * Change the tabindex attribute of the scene element
+     *
+     * @param {boolean} enable
+     */
+    self.setTabIndex = function (enable) {
+      cssRenderer.domElement.tabIndex = (enable ? '0' : '-1');
+    };
+
+    /**
      * Set the current camera position.
      *
      * The default center/front part of an equirectangular image is usually
@@ -694,6 +721,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     element.addEventListener('touchstart', touchStart, false);
     element.addEventListener('keydown', keyDown, false);
     element.tabIndex = '0';
+    element.setAttribute('aria-role', 'application');
   }
 
   return ThreeSixty;
