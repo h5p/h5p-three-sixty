@@ -28,6 +28,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
   function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
     /** @alias H5P.ThreeSixty# */
     var self = this;
+    self.isMovingElement = false;
 
     // Initialize event inheritance
     EventDispatcher.call(self);
@@ -173,7 +174,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       };
 
       if (enableControls) {
-        var elementControls = new PositionControls(element);
+        var elementControls = new PositionControls(self, element);
 
         // Relay and supplement startMoving event
         elementControls.on('movestart', function (event) {
@@ -295,7 +296,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add camera controls
-    var cameraControls = new PositionControls(cssRenderer.domElement, 400, true);
+    var cameraControls = new PositionControls(self, cssRenderer.domElement, 400, true, true);
 
     // Camera starts moving handler
     cameraControls.on('movestart', function (event) {
@@ -411,11 +412,13 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * Class for manipulating element position using different controls.
    *
    * @class
+   * @param {Object} threeSixty
    * @param {THREE.Object3D} element
    * @param {number} [friction] Determines the speed of the movement
    * @param {number} [invert] Needed to invert controls for camera
+   * @param {boolean} [isCamera]
    */
-  function PositionControls(element, friction, invert) {
+  function PositionControls(threeSixty, element, friction, invert, isCamera) {
     /** @type PositionControls# */
     var self = this;
 
@@ -527,6 +530,14 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return; // Only react to left click
       }
 
+      if (!isCamera) {
+        threeSixty.isMovingElement = true;
+      }
+      else if (threeSixty.isMovingElement) {
+        // Do not move camera while moving element
+        return;
+      }
+
       if (!start(event.pageX, event.pageY)) {
         return; // Prevented by another component
       }
@@ -554,6 +565,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var mouseUp = function (event) {
+      threeSixty.isMovingElement = false;
       window.removeEventListener('mousemove', mouseMove, false);
       window.removeEventListener('mouseup', mouseUp, false);
       end();
