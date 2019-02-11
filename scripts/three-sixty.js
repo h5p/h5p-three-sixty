@@ -69,6 +69,16 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
+     * Get the container of all the added 3D elements.
+     * Useful when rendering via React.
+     *
+     * @return {Element}
+     */
+    self.getCameraElement = function () {
+      return cssRenderer.domElement.firstChild;
+    };
+
+    /**
      * Set focus to the scene.
      */
     self.focus = function () {
