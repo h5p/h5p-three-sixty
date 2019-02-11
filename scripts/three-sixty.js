@@ -579,6 +579,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return; // Prevented by another component
       }
 
+      // Prevent other elements from moving
+      event.stopPropagation();
+
+
       // Register mouse move and up handlers
       window.addEventListener('mousemove', mouseMove, false);
       window.addEventListener('mouseup', mouseUp, false);
@@ -619,8 +623,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
       element.addEventListener('touchmove', touchMove, false);
       element.addEventListener('touchend', touchEnd, false);
     };
@@ -632,6 +634,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {TouchEvent} event
      */
     var touchMove = function (event) {
+      event.preventDefault();
+      event.stopPropagation();
       move(event.changedTouches[0].pageX, event.changedTouches[0].pageY, friction * 0.75);
     };
 
