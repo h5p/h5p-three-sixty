@@ -298,13 +298,21 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     /**
      * Give new size
      */
-    self.resize = function () {
+    self.resize = function (newRatio) {
       if (!self.element.clientWidth) {
         return;
       }
 
+      if (newRatio) {
+        camera.aspect = newRatio;
+        camera.updateProjectionMatrix();
+      }
+      else {
+        newRatio = ratio; // Avoid replacing the original
+      }
+
       // Resize main wrapping element
-      self.element.style.height = (self.element.clientWidth / ratio) + 'px';
+      self.element.style.height = (self.element.clientWidth / newRatio) + 'px';
 
       // Resize renderers
       renderer.setSize(self.element.clientWidth, self.element.clientHeight);
