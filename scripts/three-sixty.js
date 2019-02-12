@@ -500,11 +500,16 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Trigger an event when we start moving, and give other components
       // a chance to cancel
-      var movestartEvent = new H5P.Event('movestart', {
+      const eventData = {
         element: element,
         isCamera: isCamera,
-        target: e.target,
-      });
+      };
+
+      if (e) {
+        eventData.target = e.target;
+      }
+
+      var movestartEvent = new H5P.Event('movestart', eventData);
       movestartEvent.defaultPrevented = false;
 
       self.trigger(movestartEvent);
