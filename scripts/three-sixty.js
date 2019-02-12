@@ -226,7 +226,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         // Update element position according to movement
         elementControls.on('move', function (event) {
-          setElementPosition(elementControls.startY + event.alphaDelta, elementControls.startX - event.betaDelta);
+          setElementPosition(elementControls.startY + event.alpha, elementControls.startX - event.beta);
         });
 
         // Relay and supplement stopMoving event
@@ -353,8 +353,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Rotate camera as controls move
     cameraControls.on('move', function (event) {
-      let yaw = cameraControls.startY + event.alphaDelta;
-      let pitch = cameraControls.startX + event.betaDelta;
+      let yaw = cameraControls.startY + event.alpha;
+      let pitch = cameraControls.startX + event.beta;
 
       // Set outer bounds for camera so it does not loop around.
       // It can max see max 90 degrees up and down
@@ -478,6 +478,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var controlActive; // Determine if a control is being used
 
     var startPosition; // Where the element is when it starts moving
+    var prevPosition;
     var startAlpha; // Holds initial alpha value while control is active
     var startBeta; // Holds initial beta value while control is active
 
@@ -497,7 +498,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Trigger an event when we start moving, and give other components
       // a chance to cancel
-      var movestartEvent = new H5P.Event('movestart');
+      var movestartEvent = new H5P.Event('movestart', {
+        element: element,
+        isCamera: isCamera,
+      });
       movestartEvent.defaultPrevented = false;
 
       self.trigger(movestartEvent);
@@ -510,6 +514,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         x: x,
         y: y
       };
+      alpha = 0;
+      beta = 0;
       startAlpha = alpha;
       startBeta = beta;
       element.classList.add('dragging');
@@ -522,19 +528,19 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * Generic movement handler
      *
      * @private
-     * @param {number} x Current x coordinate
-     * @param {number} y Current y coordinate
+     * @param {number} deltaX Current deltaX coordinate
+     * @param {number} deltaY Current deltaY coordinate
      * @param {number} f Current friction
      */
-    var move = function (x, y, f) {
+    var move = function (deltaX, deltaY, f) {
       // Prepare move event
       var moveEvent = new H5P.Event('move');
 
       // Update position relative to cursor speed
-      moveEvent.alphaDelta = (x - startPosition.x) / f;
-      moveEvent.betaDelta = (y - startPosition.y) / f;
-      alpha = (startAlpha + moveEvent.alphaDelta) % pi2; // Max 360
-      beta = (startBeta - moveEvent.betaDelta) % Math.PI; // Max 180
+      moveEvent.alphaDelta = deltaX / f;
+      moveEvent.betaDelta = deltaY / f;
+      alpha = (alpha + moveEvent.alphaDelta) % pi2; // Max 360
+      beta = (beta + moveEvent.betaDelta) % Math.PI; // Max 180
 
       // Max 90 degrees up and down on pitch  TODO: test
       var ninety = Math.PI / 2;
@@ -603,7 +609,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var mouseMove = function (event) {
-      move(event.pageX, event.pageY, friction);
+      move(event.movementX, event.movementY, friction);
     };
 
     /**
@@ -646,7 +652,20 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
       event.preventDefault();
       event.stopPropagation();
-      move(event.changedTouches[0].pageX, event.changedTouches[0].pageY, friction * 0.75);
+
+      if (!prevPosition) {
+        prevPosition = {
+          x: startPosition.x,
+          y: startPosition.y,
+        };
+      }
+      const deltaX = event.changedTouches[0].pageX - prevPosition.x;
+      const deltaY = event.changedTouches[0].pageY - prevPosition.y;
+      prevPosition = {
+        x: event.changedTouches[0].pageX,
+        y: event.changedTouches[0].pageY,
+      };
+      move(deltaX, deltaY, friction * 0.75);
     };
 
     /**
@@ -656,6 +675,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {TouchEvent} event
      */
     var touchEnd = function (event) {
+      prevPosition = null;
       element.removeEventListener('touchmove', touchMove, false);
       element.removeEventListener('touchend', touchEnd, false);
       end();
