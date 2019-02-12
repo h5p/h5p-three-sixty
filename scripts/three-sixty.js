@@ -507,6 +507,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       };
       startAlpha = alpha;
       startBeta = beta;
+      element.classList.add('dragging');
 
       controlActive = true;
       return true;
@@ -552,6 +553,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      */
     var end = function () {
+      element.classList.remove('dragging');
       controlActive = false;
       self.trigger('movestop');
     };
