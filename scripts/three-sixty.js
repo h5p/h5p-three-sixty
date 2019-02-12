@@ -744,6 +744,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     var keyUp = function (event) {
       keyStillDown = null;
+      keyScroller.x = 0;
+      keyScroller.y = 0;
       element.removeEventListener('keyup', keyUp, false);
       end();
     };
