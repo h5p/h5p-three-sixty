@@ -182,7 +182,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {Object} startPosition
      * @param {boolean} enableControls
      */
-    self.add = function (element, startPosition, enableControls) {
+    self.add = function (element, startPosition, enableControls) {
       var threeElement = new THREE.CSS3DObject(element);
       self.threeElements.push(threeElement);
       const threeElementIndex = self.threeElements.length - 1;
@@ -214,7 +214,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         var elementControls = new PositionControls(self, element);
 
         // Relay and supplement startMoving event
-        elementControls.on('movestart', function (event) {
+        elementControls.on('movestart', function (event) {
           // Set camera start position
           elementControls.startY = -threeElement.rotation.y;
           elementControls.startX = threeElement.rotation.x;
@@ -252,7 +252,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * Remove element from "CSS world"
      * @param {THREE.CSS3DObject} threeElement
      */
-    self.remove = function (threeElement) {
+    self.remove = function (threeElement) {
       cssScene.remove(threeElement);
     };
 
@@ -342,7 +342,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // This appears to be a bug in Chrome.
 
     // Camera starts moving handler
-    cameraControls.on('movestart', function (event) {
+    cameraControls.on('movestart', function (event) {
       // Set camera start position
       cameraControls.startY = camera.rotation.y;
       cameraControls.startX = camera.rotation.x;
@@ -380,7 +380,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     });
 
     // Relay camera movement stopped event
-    cameraControls.on('movestop', function (event) {
+    cameraControls.on('movestop', function (event) {
       preventDeviceOrientation = false;
       self.trigger(event);
     });
@@ -633,7 +633,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var touchStart = function (event) {
+    var touchStart = function (event) {
       if (!start(event.changedTouches[0].pageX, event.changedTouches[0].pageY, 'touch')) {
         return;
       }
@@ -648,7 +648,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var touchMove = function (event) {
+    var touchMove = function (event) {
       if (!event.cancelable) {
         return;
       }
@@ -676,7 +676,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var touchEnd = function (event) {
+    var touchEnd = function (event) {
       prevPosition = null;
       element.removeEventListener('touchmove', touchMove, false);
       element.removeEventListener('touchend', touchEnd, false);
@@ -695,7 +695,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var keyDown = function (event) {
+    var keyDown = function (event) {
       if ([37, 100, 38, 104, 39, 102, 40, 98].indexOf(event.which) === -1) {
         return; // Not an arrow key
       }
@@ -744,7 +744,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var keyUp = function (event) {
+    var keyUp = function (event) {
       keyStillDown = null;
       keyScroller.x = 0;
       keyScroller.y = 0;
