@@ -220,7 +220,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
           elementControls.startX = threeElement.rotation.x;
 
           preventDeviceOrientation = true;
-          event.data = {element: element};
           self.trigger(event);
         });
 
@@ -499,19 +498,26 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {number} x Initial x coordinate
      * @param {number} y Initial y coordinate
      * @param {string} control Identifier
+     * @param {Event} e Original event
      * @return {boolean} If it's safe to start moving
      */
-    var start = function (x, y, control) {
+    var start = function (x, y, control, e) {
       if (controlActive) {
         return false; // Another control is active
       }
 
       // Trigger an event when we start moving, and give other components
       // a chance to cancel
-      var movestartEvent = new H5P.Event('movestart', {
+      const eventData = {
         element: element,
         isCamera: isCamera,
-      });
+      };
+
+      if (e) {
+        eventData.target = e.target;
+      }
+
+      var movestartEvent = new H5P.Event('movestart', eventData);
       movestartEvent.defaultPrevented = false;
 
       self.trigger(movestartEvent);
@@ -528,7 +534,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       beta = 0;
       startAlpha = alpha;
       startBeta = beta;
-      element.classList.add('dragging');
 
       controlActive = control;
       return true;
@@ -598,7 +603,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return;
       }
 
-      if (!start(event.pageX, event.pageY, 'mouse')) {
+      if (!start(event.pageX, event.pageY, 'mouse', event)) {
         return; // Prevented by another component
       }
 
