@@ -335,6 +335,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Add camera controls
     var cameraControls = new PositionControls(self, cssRenderer.domElement, 400, true, true);
 
+    // Workaround for touchevent not cancelable when CSS 'perspective' is set.
+    renderer.domElement.addEventListener('touchmove', function (e) { });
+    // This appears to be a bug in Chrome.
+
     // Camera starts moving handler
     cameraControls.on('movestart', function (event) {
       // Set camera start position
@@ -438,7 +442,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Add device orientation controls
     // TODO: Fix
-    // window.addEventListener('deviceorientation', deviceOrientation, false);
+    //window.addEventListener('deviceorientation', deviceOrientation, false);
   }
 
   // Extends the event dispatcher
@@ -483,9 +487,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {number} x Initial x coordinate
      * @param {number} y Initial y coordinate
+     * @param {string} control Identifier
      * @return {boolean} If it's safe to start moving
      */
-    var start = function (x, y) {
+    var start = function (x, y, control) {
       if (controlActive) {
         return false; // Another control is active
       }
@@ -509,7 +514,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       startBeta = beta;
       element.classList.add('dragging');
 
-      controlActive = true;
+      controlActive = control;
       return true;
     };
 
@@ -577,7 +582,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return;
       }
 
-      if (!start(event.pageX, event.pageY)) {
+      if (!start(event.pageX, event.pageY, 'mouse')) {
         return; // Prevented by another component
       }
 
@@ -621,7 +626,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {TouchEvent} event
      */
     var touchStart = function (event) {
-      if (!start(event.changedTouches[0].pageX, event.changedTouches[0].pageY)) {
+      if (!start(event.changedTouches[0].pageX, event.changedTouches[0].pageY, 'touch')) {
         return;
       }
 
@@ -636,6 +641,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {TouchEvent} event
      */
     var touchMove = function (event) {
+      if (!event.cancelable) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       move(event.changedTouches[0].pageX, event.changedTouches[0].pageY, friction * 0.75);
@@ -672,7 +680,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       if (keyStillDown === null) {
         // Try to start movement
-        if (start(keyScroller.x, keyScroller.y)) {
+        if (start(keyScroller.x, keyScroller.y, 'keyboard')) {
           keyStillDown = event.which;
           element.addEventListener('keyup', keyUp, false);
         }
@@ -735,10 +743,11 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
+     * @param {string} [control] Check for specific control
      * @return {boolean}
      */
-    self.isMoving = function () {
-      return !!controlActive;
+    self.isMoving = function (control) {
+      return (control ? controlActive === control : !!controlActive);
     };
 
     // Register event listeners to position element
