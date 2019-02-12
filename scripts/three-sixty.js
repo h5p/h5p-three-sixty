@@ -259,10 +259,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     /**
      * TODO
      */
-    self.removeElements = function () {
-      self.threeElements.forEach(function (threeElement) {
-        self.remove(threeElement);
-      });
+    self.removeElements = function (skipRemoval) {
+      if (!skipRemoval) {
+        self.threeElements.forEach(function (threeElement) {
+          self.remove(threeElement);
+        });
+      }
 
       self.threeElements = [];
     };
