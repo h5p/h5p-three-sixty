@@ -508,6 +508,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var startAlpha; // Holds initial alpha value while control is active
     var startBeta; // Holds initial beta value while control is active
 
+    let keyStillDown = null; // Used to determine if a movement key is being held down.
+
     /**
      * Generic initialization when movement starts.
      *
@@ -638,7 +640,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Prevent other elements from moving
       event.stopPropagation();
 
-
       // Register mouse move and up handlers
       window.addEventListener('mousemove', mouseMove, false);
       window.addEventListener('mouseup', mouseUp, false);
@@ -724,12 +725,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       end();
     };
 
-    let keyStillDown = null;
-    const keyScroller = {
-      x: 0,
-      y: 0
-    };
-
     /**
      * Handle touch start
      *
@@ -743,7 +738,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       if (keyStillDown === null) {
         // Try to start movement
-        if (start(keyScroller.x, keyScroller.y, 'keyboard')) {
+        if (start(0, 0, 'keyboard')) {
           keyStillDown = event.which;
           element.addEventListener('keyup', keyUp, false);
         }
@@ -756,29 +751,32 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       if (keyStillDown !== event.which) {
         return; // Not the same key as we started with
       }
-      const previousX = keyScroller.x;
-      const previousY = keyScroller.y;
+
+      const delta = {
+        x: 0,
+        y: 0
+      };
 
       // Update movement in approperiate direction
       switch (event.which) {
         case 37:
         case 100:
-          keyScroller.x += invert;
+          delta.x += invert;
           break;
         case 38:
         case 104:
-          keyScroller.y += invert;
+          delta.y += invert;
           break;
         case 39:
         case 102:
-          keyScroller.x -= invert;
+          delta.x -= invert;
           break;
         case 40:
         case 98:
-          keyScroller.y -= invert;
+          delta.y -= invert;
           break;
       }
-      move(keyScroller.x - previousX, keyScroller.y - previousY, friction * 0.025);
+      move(delta.x, delta.y, friction * 0.025);
     };
 
     /**
@@ -789,8 +787,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     var keyUp = function (event) {
       keyStillDown = null;
-      keyScroller.x = 0;
-      keyScroller.y = 0;
       element.removeEventListener('keyup', keyUp, false);
       end();
     };
