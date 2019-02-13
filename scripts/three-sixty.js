@@ -247,6 +247,13 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
           preventDeviceOrientation = false;
           self.trigger(event);
         });
+
+        // Move camera to element when tabbing
+        element.addEventListener('focus', function (e) {
+          if (!e.defaultPrevented) {
+            self.setCameraPosition(-threeElement.rotation.y, threeElement.rotation.x);
+          }
+        }, false);
       }
 
       // Set initial position
