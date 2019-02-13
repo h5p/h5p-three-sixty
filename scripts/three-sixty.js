@@ -756,6 +756,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       if (keyStillDown !== event.which) {
         return; // Not the same key as we started with
       }
+      const previousX = keyScroller.x;
+      const previousY = keyScroller.y;
 
       // Update movement in approperiate direction
       switch (event.which) {
@@ -776,7 +778,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
           keyScroller.y -= invert;
           break;
       }
-      move(keyScroller.x, keyScroller.y, friction * 0.025);
+      move(keyScroller.x - previousX, keyScroller.y - previousY, friction * 0.025);
     };
 
     /**
