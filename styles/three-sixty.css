@@ -13,6 +13,7 @@
   cursor: -moz-grab;
   cursor: -webkit-grab;
   user-select: none;
+  -ms-user-select: none;
 }
 .h5p-three-sixty-controls:active {
   cursor: grabbing;
