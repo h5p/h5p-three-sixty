@@ -653,7 +653,25 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var mouseMove = function (event) {
-      move(event.movementX, event.movementY, friction);
+      let xDiff = event.movementX;
+      let yDiff = event.movementY;
+      if (!event.movementX || !event.movementY) {
+        // Diff on old values
+        if (!prevPosition) {
+          prevPosition = {
+            x: startPosition.x,
+            y: startPosition.y,
+          };
+        }
+        xDiff = event.pageX - prevPosition.x;
+        yDiff = event.pageY - prevPosition.y;
+
+        prevPosition = {
+          x: event.pageX,
+          y: event.pageY,
+        };
+      }
+      move(xDiff, yDiff, friction);
     };
 
     /**
@@ -663,6 +681,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var mouseUp = function (event) {
+      prevPosition = null;
       threeSixty.isMovingElement = false;
       window.removeEventListener('mousemove', mouseMove, false);
       window.removeEventListener('mouseup', mouseUp, false);
