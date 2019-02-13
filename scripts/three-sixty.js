@@ -209,7 +209,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         threeElement.rotation.order = 'YXZ';
         threeElement.rotation.y = -yaw;
-        threeElement.rotation.x = pitch;
+        threeElement.rotation.x = +pitch;
       };
 
       if (enableControls) {
