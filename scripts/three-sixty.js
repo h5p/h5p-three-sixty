@@ -181,10 +181,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {DOMElement} element
      * @param {Object} startPosition
      * @param {boolean} enableControls
-     * @param {function} isValidStartCallback Callback that is run when starting to drag the element.
-     *                        Returns true if dragging should proceed.
      */
-    self.add = function (element, startPosition, enableControls, isValidStartCallback) {
+    self.add = function (element, startPosition, enableControls) {
       var threeElement = new THREE.CSS3DObject(element);
       self.threeElements.push(threeElement);
       const threeElementIndex = self.threeElements.length - 1;
@@ -213,14 +211,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       };
 
       if (enableControls) {
-        var elementControls = new PositionControls(
-          self,
-          element,
-          undefined,
-          undefined,
-          undefined,
-          isValidStartCallback
-        );
+        var elementControls = new PositionControls(self, element);
 
         // Relay and supplement startMoving event
         elementControls.on('movestart', function (event) {
@@ -483,9 +474,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * @param {number} [friction] Determines the speed of the movement
    * @param {number} [invert] Needed to invert controls for camera
    * @param {boolean} [isCamera]
-   * @param {function} isValidStartCallback Callback that is run when starting to drag the element to verify if the action is valid
    */
-  function PositionControls(threeSixty, element, friction, invert, isCamera, isValidStartCallback) {
+  function PositionControls(threeSixty, element, friction, invert, isCamera) {
     /** @type PositionControls# */
     var self = this;
 
@@ -523,14 +513,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var start = function (x, y, control, e) {
       if (controlActive) {
         return false; // Another control is active
-      }
-
-      // Run start dragging validation callback
-      if (isValidStartCallback) {
-        const isValid = isValidStartCallback(element, e);
-        if (!isValid) {
-          return false;
-        }
       }
 
       // Trigger an event when we start moving, and give other components
@@ -631,9 +613,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
 
       if (!start(event.pageX, event.pageY, 'mouse', event)) {
-        window.addEventListener('mouseup', function () {
-          threeSixty.isMovingElement = false;
-        }, false);
         return; // Prevented by another component
       }
 
