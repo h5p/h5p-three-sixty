@@ -634,7 +634,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     var mouseMove = function (event) {
       let xDiff = event.movementX;
       let yDiff = event.movementY;
-      if (!event.movementX || !event.movementY) {
+      if (event.movementX === undefined || event.movementY === undefined) {
         // Diff on old values
         if (!prevPosition) {
           prevPosition = {
