@@ -28,7 +28,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
   function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
     /** @alias H5P.ThreeSixty# */
     var self = this;
-    self.isMovingElement = false;
 
     // Initialize event inheritance
     EventDispatcher.call(self);
@@ -604,14 +603,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         return; // Only react to left click
       }
 
-      if (!isCamera) {
-        threeSixty.isMovingElement = true;
-      }
-      else if (threeSixty.isMovingElement) {
-        // Do not move camera while moving element
-        return;
-      }
-
       if (!start(event.pageX, event.pageY, 'mouse', event)) {
         return; // Prevented by another component
       }
@@ -661,7 +652,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     var mouseUp = function (event) {
       prevPosition = null;
-      threeSixty.isMovingElement = false;
       window.removeEventListener('mousemove', mouseMove, false);
       window.removeEventListener('mouseup', mouseUp, false);
       end();
