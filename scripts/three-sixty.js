@@ -42,7 +42,11 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     self.element = document.createElement('div');
     self.element.classList.add('h5p-three-sixty');
 
-    self.threeElements = [];
+    // TODO: ThreeSixty should not have to deal with this, this belongs in a
+    // a separate collection/array class. (ThreeSixty should just add or remove
+    // elements from the 3d world, not keep an indexed mapping for the 
+    // consumer/user of this library.)
+    const threeElements = [];
 
     /**
      * Help set up renderers and add them to the main wrapper element.
@@ -108,7 +112,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
       camera.rotation.y = -yaw;
       camera.rotation.x = pitch;
-      self.trigger('movestop', {
+      self.trigger('movestop', { // TODO: Figure out why this is here and what it does
         pitch: pitch,
         yaw: yaw,
       });
@@ -183,31 +187,11 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.add = function (element, startPosition, enableControls) {
       var threeElement = new THREE.CSS3DObject(element);
-      self.threeElements.push(threeElement);
-      const threeElementIndex = self.threeElements.length - 1;
+      threeElements.push(threeElement);
 
       // Reset HUD values
       element.style.left = 0;
       element.style.top = 0;
-
-      /**
-       * Set the element's position in the 3d world, always facing the camera.
-       *
-       * @private
-       * @param {number} yaw Radians from 0 to Math.PI*2 (0-360)
-       * @param {number} pitch Radians from -Math.PI/2 to Math.PI/2 (-90-90)
-       */
-      var setElementPosition = function (yaw, pitch) {
-        var radius = 800;
-
-        threeElement.position.x = radius * Math.sin(yaw) * Math.cos(pitch);
-        threeElement.position.y = radius * Math.sin(pitch);
-        threeElement.position.z = -radius * Math.cos(yaw) * Math.cos(pitch);
-
-        threeElement.rotation.order = 'YXZ';
-        threeElement.rotation.y = -yaw;
-        threeElement.rotation.x = +pitch;
-      };
 
       if (enableControls) {
         var elementControls = new PositionControls(self, element);
@@ -224,13 +208,16 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         // Update element position according to movement
         elementControls.on('move', function (event) {
-          setElementPosition(elementControls.startY + event.alpha, elementControls.startX - event.beta);
+          ThreeSixty.setElementPosition(threeElement, {
+            yaw: elementControls.startY + event.alpha,
+            pitch: elementControls.startX - event.beta
+          });
         });
 
         // Relay and supplement stopMoving event
         elementControls.on('movestop', function (event) {
           event.data = {
-            elementIndex: threeElementIndex,
+            target: element,
             yaw: -threeElement.rotation.y,
             pitch: threeElement.rotation.x
           };
@@ -247,7 +234,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       }
 
       // Set initial position
-      setElementPosition(startPosition.yaw, startPosition.pitch);
+      ThreeSixty.setElementPosition(threeElement, startPosition);
 
       cssScene.add(threeElement);
       return threeElement;
@@ -258,20 +245,38 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {THREE.CSS3DObject} threeElement
      */
     self.remove = function (threeElement) {
+      threeElements.splice(threeElements.indexOf(threeElement), 1);
       cssScene.remove(threeElement);
     };
 
     /**
-     * TODO
+     * Find the threeElement for the given element.
+     * TODO: Move into a separate collection handling class
+     *
+     * @param {Element} element
+     * @return {THREE.CSS3DObject}
      */
-    self.removeElements = function (skipRemoval) {
-      if (!skipRemoval) {
-        self.threeElements.forEach(function (threeElement) {
-          self.remove(threeElement);
-        });
+    self.find = function (element) {
+      for (let i = 0; i < threeElements.length; i++) {
+        if (threeElements[i].element === element) {
+          return threeElements[i];
+        }
       }
+    };
 
-      self.threeElements = [];
+    /**
+     * Find the index of the given element.
+     * TODO: Move into a separate collection handling class
+     *
+     * @param {Element} element
+     * @return {number}
+     */
+    self.indexOf = function (element) {
+      for (let i = 0; i < threeElements.length; i++) {
+        if (threeElements[i].element === element) {
+          return i;
+        }
+      }
     };
 
     /**
@@ -395,6 +400,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Relay camera movement stopped event
     cameraControls.on('movestop', function (event) {
       preventDeviceOrientation = false;
+      event.data = {
+        yaw: -camera.rotation.y,
+        pitch: camera.rotation.x
+      };
       self.trigger(event);
     });
 
@@ -808,6 +817,26 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     element.tabIndex = '0';
     element.setAttribute('aria-role', 'application');
   }
+
+  /**
+   * Set the element's position in the 3d world, always facing the camera.
+   *
+   * @param {THREE.CSS3DObject} threeElement
+   * @param {Object} position
+   * @param {number} position.yaw Radians from 0 to Math.PI*2 (0-360)
+   * @param {number} position.pitch Radians from -Math.PI/2 to Math.PI/2 (-90-90)
+   */
+  ThreeSixty.setElementPosition = function (threeElement, position) {
+    var radius = 800;
+
+    threeElement.position.x = radius * Math.sin(position.yaw) * Math.cos(position.pitch);
+    threeElement.position.y = radius * Math.sin(position.pitch);
+    threeElement.position.z = -radius * Math.cos(position.yaw) * Math.cos(position.pitch);
+
+    threeElement.rotation.order = 'YXZ';
+    threeElement.rotation.y = -position.yaw;
+    threeElement.rotation.x = +position.pitch;
+  };
 
   return ThreeSixty;
 })(H5P.EventDispatcher, H5P.ThreeJS);
