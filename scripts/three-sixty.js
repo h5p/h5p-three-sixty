@@ -208,9 +208,18 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         // Update element position according to movement
         elementControls.on('move', function (event) {
+
+          const yaw = elementControls.startY + event.alpha;
+          const pitch = elementControls.startX - event.beta;
+          //const yawBoost = 1; //Math.abs(Math.sin(pitch)) + 1;
+          //const yawBoost2 = Math.abs(Math.cos(tmpCamera.rotation.y + yaw));
+
+          //console.log(yaw, camera.rotation.y);
+          //console.log(yawBoost2);
+
           ThreeSixty.setElementPosition(threeElement, {
-            yaw: elementControls.startY + event.alpha,
-            pitch: elementControls.startX - event.beta
+            yaw: yaw, // elementControls.startY + event.alpha,
+            pitch: pitch // elementControls.startX - event.beta
           });
         });
 
@@ -568,9 +577,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Prepare move event
       var moveEvent = new H5P.Event('move');
 
+      // FOV / Width = deg pr px
+      const dpx = (75 / 958);
+
       // Update position relative to cursor speed
-      moveEvent.alphaDelta = deltaX / f;
-      moveEvent.betaDelta = deltaY / f;
+      moveEvent.alphaDelta = toRad(dpx * deltaX) // deltaX / f;
+      moveEvent.betaDelta = toRad(dpx * deltaY) // deltaY / f;
       alpha = (alpha + moveEvent.alphaDelta) % pi2; // Max 360
       beta = (beta + moveEvent.betaDelta) % Math.PI; // Max 180
 
