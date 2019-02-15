@@ -44,7 +44,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // TODO: ThreeSixty should not have to deal with this, this belongs in a
     // a separate collection/array class. (ThreeSixty should just add or remove
-    // elements from the 3d world, not keep an indexed mapping for the 
+    // elements from the 3d world, not keep an indexed mapping for the
     // consumer/user of this library.)
     const threeElements = [];
 
@@ -789,6 +789,19 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
+     * Manually handle focusing to avoid scrolling the elements out of place.
+     *
+     * @private
+     * @param {TouchEvent} event
+     */
+    var focus = function (e) {
+      e.preventDefault();
+      e.target.focus({
+        preventScroll: true
+      });
+    }
+
+    /**
      * @return {number}
      */
     self.getAlpha = function () {
@@ -816,6 +829,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     element.addEventListener('keydown', keyDown, false);
     element.tabIndex = '0';
     element.setAttribute('aria-role', 'application');
+    element.addEventListener('focus', focus, false);
   }
 
   /**
