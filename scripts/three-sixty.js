@@ -140,12 +140,11 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Create a sphere surrounding the camera with the source texture
       geometry = new THREE.SphereGeometry(radius, segments, segments);
       var material = new THREE.MeshBasicMaterial({
-        map: sourceTexture,
-        side: THREE.FrontSide
+        map: sourceTexture
       });
 
       sphere = new THREE.Mesh(geometry, material);
-      sphere.scale.x = -1; // Flip to make front side face inwards
+      geometry.scale(-1, 1, 1); // Flip to make front side face inwards
       scene.add(sphere);
     };
 
