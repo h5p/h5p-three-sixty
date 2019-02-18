@@ -156,6 +156,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Create a renderer for our "CSS world"
     var cssRenderer = add(new THREE.CSS3DRenderer());
+    cssRenderer.domElement.firstChild.classList.add('h5p-three-sixty-camera');
 
     /**
      * TODO
