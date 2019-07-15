@@ -129,7 +129,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       camPos.pitch !== undefined ? camPos.pitch : 0
     );
     const radius = 10;
-    const segmentation = options.segments || 4;
+    let segmentation = options.segments || 4;
 
     let sphere, renderLoopId = null;
 
