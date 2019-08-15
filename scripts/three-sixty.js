@@ -129,26 +129,42 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       camPos.pitch !== undefined ? camPos.pitch : 0
     );
     const radius = 10;
-    const segmentation = options.segments || 4;
+    let segmentation = options.segments || 4;
 
-    // Create texture from source canvas
-    var sourceTexture = new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat);
-    var geometry;
-    var sphere;
+    let sphere, renderLoopId = null;
 
-    var createSphere = function (segments) {
+    /**
+     * Create the world sphere with its needed resources.
+     * @private
+     */
+    const createSphere = function () {
       // Create a sphere surrounding the camera with the source texture
-      geometry = new THREE.SphereGeometry(radius, segments, segments);
-      var material = new THREE.MeshBasicMaterial({
-        map: sourceTexture
-      });
+      const geometry = new THREE.SphereGeometry(radius, segmentation, segmentation);
 
+      // Create material with texture from source element
+      const material = new THREE.MeshBasicMaterial({
+        map: new THREE.Texture(sourceElement, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, THREE.RGBFormat)
+      });
+      material.map.needsUpdate = true;
+
+      // Prepare sphere and add to scene
       sphere = new THREE.Mesh(geometry, material);
       geometry.scale(-1, 1, 1); // Flip to make front side face inwards
       scene.add(sphere);
     };
 
-    createSphere(segmentation);
+    /**
+     * Remove sphere resources from memory.
+     * @private
+     */
+    const disposeSphere = function () {
+      scene.remove(sphere);
+      sphere.geometry.dispose();
+      sphere.material.dispose();
+      sphere.material.map.dispose();
+      sphere = null;
+    };
+
     var renderer = add(new THREE.WebGLRenderer());
 
     // Create a scene for our "CSS world"
@@ -159,23 +175,64 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     cssRenderer.domElement.firstChild.classList.add('h5p-three-sixty-camera');
 
     /**
-     * TODO
+     * Start rendering scene
      */
     self.startRendering = function () {
-      self.isRendering = true;
-      render();
+      if (renderLoopId === null) { // Prevents double rendering
+        render();
+      }
     };
 
     /**
-     * TODO
+     * Stop rendering scene
      */
     self.stopRendering = function () {
-      self.isRendering = false;
+      cancelAnimationFrame(renderLoopId);
+      renderLoopId = null;
     };
 
-    self.setRenderingQuality = function (segmentation) {
-      scene.remove(sphere);
-      createSphere(segmentation);
+    /**
+     * Change the number of segments used to create the sphere.
+     * Note: Rendering has to be stopped and started again for these changes
+     * to take affect. (Due to memory management)
+     * @param {number} numSegments
+     */
+    self.setSegmentNumber = function (numSegments) {
+      segmentation = numSegments;
+    };
+
+    /**
+     * Change the sourceElement of the world sphere.
+     * Useful for changing scenes.
+     * @param {DOMElement} element video or image source
+     */
+    self.setSourceElement = function (element) {
+      sourceElement = element;
+    };
+
+    /**
+     * Will re-create the world sphere. Useful after changing sourceElement
+     * or segment number.
+     *
+     * Note that this will have to be called initally to create the sphere as
+     * well to allow for full control.
+     */
+    self.update = function () {
+      if (sphere) {
+        disposeSphere();
+      }
+      createSphere();
+      triggerFirstRenderEvent = true;
+    }
+
+    let triggerFirstRenderEvent;
+
+    /**
+     * Triggers a redraw of texture fetched from the sourceElement.
+     * This is useful in case the source has changed.
+     */
+    self.updateSource = function () {
+      sphere.material.map.needsUpdate = true;
     };
 
     /**
@@ -335,21 +392,18 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      */
     var render = function () {
-      if (!self.isRendering) {
-        return;
-      }
-
-      if (!hasFirstRender || sourceNeedsUpdate !== undefined && sourceNeedsUpdate(sourceElement)) {
-        hasFirstRender = true;
-        sourceTexture.needsUpdate = true;
-      }
 
       // Draw scenes
       renderer.render(scene, camera);
       cssRenderer.render(cssScene, camera);
 
       // Prepare next render
-      requestAnimationFrame(render);
+      renderLoopId = requestAnimationFrame(render);
+
+      if (triggerFirstRenderEvent) {
+        triggerFirstRenderEvent = false;
+        self.trigger('firstrender');
+      }
     };
 
     // Add camera controls
