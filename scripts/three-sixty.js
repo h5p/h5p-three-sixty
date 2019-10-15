@@ -882,7 +882,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     element.addEventListener('touchstart', touchStart, false);
     element.addEventListener('keydown', keyDown, false);
     element.tabIndex = '0';
-    element.setAttribute('aria-role', 'application');
+    element.setAttribute('role', 'application');
     element.addEventListener('focus', focus, false);
   }
 
