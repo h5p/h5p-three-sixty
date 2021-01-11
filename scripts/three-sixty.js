@@ -247,7 +247,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Reset HUD values
       element.style.left = 0;
       element.style.top = 0;
-      element.style.fontSize = '0.5em';
 
       if (enableControls) {
         var elementControls = new PositionControls(self, element);
