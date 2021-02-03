@@ -35,7 +35,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Settings
     const fieldOfView = 75;
     const near = 0.1;
-    const far = 100;
+    const far = 1000;
     let ratio = options.ratio ? options.ratio : 16 / 9;
 
     // Main wrapper element
@@ -66,9 +66,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      *
      * @param {string} label
      */
-    self.setAriaLabel = function (label) {
+   self.setAriaLabel = function (label) {
       cssRenderer.domElement.setAttribute('aria-label', label);
-      cssRenderer.domElement.firstChild.setAttribute('aria-role', 'document'); // TODO: Separate setting?
+      cssRenderer.domElement.setAttribute('aria-role', 'document'); // TODO: Separate setting?
     };
 
     /**
@@ -78,7 +78,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @return {Element}
      */
     self.getCameraElement = function () {
-      return cssRenderer.domElement.firstChild;
+      return cssRenderer.domElement;
     };
 
     /**
@@ -170,9 +170,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Create a scene for our "CSS world"
     var cssScene = new THREE.Scene();
 
-    // Create a renderer for our "CSS world"
-    var cssRenderer = add(new THREE.CSS3DRenderer());
-    cssRenderer.domElement.firstChild.classList.add('h5p-three-sixty-camera');
+    var cssRenderer = add(new THREE.CSS2DRenderer);
 
     /**
      * Start rendering scene
@@ -243,7 +241,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {boolean} enableControls
      */
     self.add = function (element, startPosition, enableControls) {
-      var threeElement = new THREE.CSS3DObject(element);
+      var threeElement = new THREE.CSS2DObject(element);
       threeElements.push(threeElement);
 
       // Reset HUD values
