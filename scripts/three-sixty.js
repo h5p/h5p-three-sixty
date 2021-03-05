@@ -702,7 +702,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
           y: event.pageY,
         };
       }
-      move(xDiff, yDiff, friction);
+      if (xDiff !== 0 || yDiff !== 0) {
+        move(xDiff, yDiff, friction);
+      }
     };
 
     /**
