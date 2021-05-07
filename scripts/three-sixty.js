@@ -178,6 +178,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      */
     self.startRendering = function () {
       if (renderLoopId === null) { // Prevents double rendering
+        /*Since the 2D environment is rendered as "screen space overlay", it will always be "closest" to the camera.
+        By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
+        onClick, etc and pseudo-classes (hover etc) on all elements in scene
+        */
         cssRenderer.domElement.insertBefore(css3dRenderer.domElement, cssRenderer.domElement.firstChild)
         render();
       }
