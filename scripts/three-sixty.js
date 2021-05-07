@@ -179,7 +179,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     self.startRendering = function () {
       if (renderLoopId === null) { // Prevents double rendering
         cssRenderer.domElement.insertBefore(css3dRenderer.domElement, cssRenderer.domElement.firstChild)
-        console.log("trest")
         render();
       }
     };
