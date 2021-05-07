@@ -66,7 +66,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      *
      * @param {string} label
      */
-   self.setAriaLabel = function (label) {
+    self.setAriaLabel = function (label) {
       cssRenderer.domElement.setAttribute('aria-label', label);
       cssRenderer.domElement.setAttribute('aria-role', 'document'); // TODO: Separate setting?
     };
@@ -170,13 +170,19 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Create a scene for our "CSS world"
     var cssScene = new THREE.Scene();
 
+    var css3dRenderer = add(new THREE.CSS3DRenderer);
     var cssRenderer = add(new THREE.CSS2DRenderer);
-
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d');
     /**
      * Start rendering scene
      */
     self.startRendering = function () {
       if (renderLoopId === null) { // Prevents double rendering
+        /*Since the 2D environment is rendered as "screen space overlay", it will always be "closest" to the camera.
+        By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
+        onClick, etc and pseudo-classes (hover etc) on all elements in scene
+        */
+        cssRenderer.domElement.insertBefore(css3dRenderer.domElement, cssRenderer.domElement.firstChild)
         render();
       }
     };
@@ -241,7 +247,13 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {boolean} enableControls
      */
     self.add = function (element, startPosition, enableControls) {
-      var threeElement = new THREE.CSS2DObject(element);
+      let threeElement;
+      if(element.classList.contains("render-in-3d")){
+        threeElement = new THREE.CSS3DObject(element);
+        threeElement.is3d = true;
+      } else {
+        threeElement = new THREE.CSS2DObject(element);
+      }
       threeElements.push(threeElement);
 
       // Reset HUD values
@@ -382,6 +394,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       // Resize renderers
       renderer.setSize(self.element.clientWidth, self.element.clientHeight);
       cssRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      css3dRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
     };
 
     var hasFirstRender;
@@ -393,6 +406,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Draw scenes
       renderer.render(scene, camera);
+      css3dRenderer.render(cssScene, camera);
       cssRenderer.render(cssScene, camera);
 
       // Prepare next render
