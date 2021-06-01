@@ -65,25 +65,28 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {string} label
      */
     self.setAriaLabel = function (label) {
-      cssRenderer.domElement.setAttribute('aria-label', label);
-      cssRenderer.domElement.setAttribute('role', 'document'); // TODO: Separate setting?
+      css2dRenderer.domElement.setAttribute('aria-label', label);
+      css2dRenderer.domElement.setAttribute('role', 'document'); // TODO: Separate setting?
+
+      css3dRenderer.domElement.setAttribute('aria-label', label);
+      css3dRenderer.domElement.setAttribute('role', 'document'); // TODO: Separate setting?
     };
 
     /**
      * Get the container of all the added 3D elements.
      * Useful when rendering via React.
      *
-     * @return {Element}
+     * @return {HTMLElement}
      */
-    self.getCameraElement = function () {
-      return cssRenderer.domElement;
+    self.getRenderers = function () {
+      return [css2dRenderer.domElement, css3dRenderer.domElement];
     };
 
     /**
      * Set focus to the scene.
      */
     self.focus = function () {
-      cssRenderer.domElement.focus();
+      css2dRenderer.domElement.focus();
     };
 
     /**
@@ -92,7 +95,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {boolean} enable
      */
     self.setTabIndex = function (enable) {
-      cssRenderer.domElement.tabIndex = (enable ? '0' : '-1');
+      css2dRenderer.domElement.tabIndex = (enable ? '0' : '-1');
+      css3dRenderer.domElement.tabIndex = (enable ? '0' : '-1');
     };
 
     /**
@@ -168,8 +172,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // Create a scene for our "CSS world"
     const cssScene = new THREE.Scene();
 
+    const css2dRenderer = add(new THREE.CSS2DRenderer);
     const css3dRenderer = add(new THREE.CSS3DRenderer);
-    const cssRenderer = add(new THREE.CSS2DRenderer);
+    css2dRenderer.domElement.classList.add('h5p-three-sixty-2d');
     css3dRenderer.domElement.classList.add('h5p-three-sixty-3d');
     /**
      * Start rendering scene
@@ -180,7 +185,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
         onClick, etc and pseudo-classes (hover etc) on all elements in scene
         */
-        cssRenderer.domElement.insertBefore(css3dRenderer.domElement, cssRenderer.domElement.firstChild)
+        css2dRenderer.domElement.insertBefore(css3dRenderer.domElement, css2dRenderer.domElement.firstChild)
         render();
       }
     };
@@ -381,7 +386,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Resize renderers
       renderer.setSize(self.element.clientWidth, self.element.clientHeight);
-      cssRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      css2dRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
       css3dRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
     };
 
@@ -392,8 +397,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Draw scenes
       renderer.render(scene, camera);
+      css2dRenderer.render(cssScene, camera);
       css3dRenderer.render(cssScene, camera);
-      cssRenderer.render(cssScene, camera);
 
       // Prepare next render
       renderLoopId = requestAnimationFrame(render);
@@ -405,7 +410,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add camera controls
-    var cameraControls = new PositionControls(cssRenderer.domElement, 400, true, true);
+    var cameraControls = new PositionControls(css2dRenderer.domElement, 400, true, true);
 
     // Workaround for touchevent not cancelable when CSS 'perspective' is set.
     renderer.domElement.addEventListener('touchmove', function (e) { });
@@ -460,65 +465,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     });
 
     // Add approperiate styling
-    cssRenderer.domElement.classList.add('h5p-three-sixty-controls');
+    css2dRenderer.domElement.classList.add('h5p-three-sixty-controls');
 
     var preventDeviceOrientation;
-    // var qOrientation, qMovement, qNinety, euler, xVector, zVector;
-
-    // /**
-    //  * Handle screen orientation change by compensating camera
-    //  *
-    //  * @private
-    //  */
-    // var setOrientation = function () {
-    //   qOrientation.setFromAxisAngle(zVector, toRad(-(window.orientation || 0)));
-    // };
-
-    // /**
-    //  * Initialize orientation supported device
-    //  *
-    //  * @private
-    //  */
-    // var initializeOrientation = function () {
-    //   qOrientation = new THREE.Quaternion();
-    //   qMovement = new THREE.Quaternion();
-    //   qNinety = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-    //   euler = new THREE.Euler();
-    //   xVector = new THREE.Vector3(1, 0, 0);
-    //   zVector = new THREE.Vector3(0, 0, 1);
-
-    //   // Listen for screen rotation
-    //   window.addEventListener('orientationchange', setOrientation, false);
-    //   setOrientation(); // Set default
-    // };
-
-    // /**
-    //  * Handle device groscope movement
-    //  *
-    //  * @param {DeviceOrientationEvent} event
-    //  */
-    // var deviceOrientation = function (event) {
-    //   if (qOrientation === undefined) {
-    //     // Initialize on first orientation event
-    //     initializeOrientation();
-    //   }
-
-    //   if (preventDeviceOrientation) {
-    //     return;
-    //   }
-
-    //   // Adjust camera to reflect device movement
-    //   euler.set(toRad(event.beta), toRad(event.alpha) + cameraControls.getAlpha(), toRad(-event.gamma), 'YXZ');
-    //   camera.quaternion.setFromEuler(euler);
-    //   camera.quaternion.multiply(qNinety); // Shift camera 90 degrees
-    //   qMovement.setFromAxisAngle(xVector, -cameraControls.getBeta());
-    //   camera.quaternion.multiply(qMovement); // Compensate for movement
-    //   camera.quaternion.multiply(qOrientation); // Compensate for device orientation
-    // };
-
-    // Add device orientation controls
-    // TODO: Fix
-    //window.addEventListener('deviceorientation', deviceOrientation, false);
   }
 
   // Extends the event dispatcher
