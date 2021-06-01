@@ -174,8 +174,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     const css2dRenderer = add(new THREE.CSS2DRenderer);
     const css3dRenderer = add(new THREE.CSS3DRenderer);
-    css2dRenderer.domElement.classList.add('h5p-three-sixty-2d', 'h5p-three-sixty-camera');
-    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d', 'h5p-three-sixty-camera');
+    css2dRenderer.domElement.classList.add('h5p-three-sixty-2d');
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d');
     /**
      * Start rendering scene
      */

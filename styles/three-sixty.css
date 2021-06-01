@@ -23,9 +23,3 @@
 .h5p-three-sixty-controls img {
   -webkit-user-drag: none;
 }
-.h5p-three-sixty-camera {
-  pointer-events: none;
-}
-.h5p-three-sixty-camera > * {
-  pointer-events: auto;
-}
