@@ -175,17 +175,20 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     const css2dRenderer = add(new THREE.CSS2DRenderer);
     const css3dRenderer = add(new THREE.CSS3DRenderer);
     css2dRenderer.domElement.classList.add('h5p-three-sixty-2d');
-    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d');
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d'); 
+    
     /**
      * Start rendering scene
      */
     self.startRendering = function () {
       if (renderLoopId === null) { // Prevents double rendering
-        /*Since the 2D environment is rendered as "screen space overlay", it will always be "closest" to the camera.
-        By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
-        onClick, etc and pseudo-classes (hover etc) on all elements in scene
-        */
-        css2dRenderer.domElement.insertBefore(css3dRenderer.domElement, css2dRenderer.domElement.firstChild)
+        window.requestAnimationFrame(() => {
+          // Since the 2D environment is rendered as "screen space overlay", it will always be "closest" to the camera.
+          // By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
+          // onClick, etc and pseudo-classes (hover etc) on all elements in scene
+          css2dRenderer.domElement.insertBefore(css3dRenderer.domElement, css2dRenderer.domElement.firstChild);
+        });
+        
         render();
       }
     };
@@ -466,6 +469,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     // Add approperiate styling
     css2dRenderer.domElement.classList.add('h5p-three-sixty-controls');
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-controls');
 
     var preventDeviceOrientation;
   }
