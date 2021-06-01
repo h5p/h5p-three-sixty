@@ -1,5 +1,4 @@
 H5P.ThreeSixty = (function (EventDispatcher, THREE) {
-
   /**
    * Convert deg to rad
    * @return {number}
@@ -164,13 +163,13 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       sphere = null;
     };
 
-    var renderer = add(new THREE.WebGLRenderer());
+    const renderer = add(new THREE.WebGLRenderer());
 
     // Create a scene for our "CSS world"
-    var cssScene = new THREE.Scene();
+    const cssScene = new THREE.Scene();
 
-    var css3dRenderer = add(new THREE.CSS3DRenderer);
-    var cssRenderer = add(new THREE.CSS2DRenderer);
+    const css3dRenderer = add(new THREE.CSS3DRenderer);
+    const cssRenderer = add(new THREE.CSS2DRenderer);
     css3dRenderer.domElement.classList.add('h5p-three-sixty-3d');
     /**
      * Start rendering scene
@@ -256,8 +255,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       threeElements.push(threeElement);
 
       // Reset HUD values
-      element.style.left = 0;
-      element.style.top = 0;
+      element.style.left = "0";
+      element.style.top = "0";
 
       if (enableControls) {
         var elementControls = new PositionControls(element);
