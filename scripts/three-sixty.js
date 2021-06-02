@@ -46,6 +46,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // consumer/user of this library.)
     const threeElements = [];
 
+    this.preventCameraMovement = false;
+
     /**
      * Help set up renderers and add them to the main wrapper element.
      *
@@ -300,9 +302,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         // Move camera to element when tabbing
         element.addEventListener('focus', function (e) {
-          if (!e.defaultPrevented) {
+          if (!e.defaultPrevented && !self.preventCameraMovement) {
             self.setCameraPosition(-threeElement.rotation.y, threeElement.rotation.x);
           }
+          self.setPreventCameraMovement(false);
         }, false);
       }
 
@@ -311,6 +314,15 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       cssScene.add(threeElement);
       return threeElement;
+    };
+
+    /**
+     * Used to stop camera from centering on elements upon focus 
+     *
+     * @param {boolean} setPreventCameraMovement 
+     */
+    self.setPreventCameraMovement = (setPreventCameraMovement) => {
+      self.preventCameraMovement = setPreventCameraMovement;
     };
 
     /**
