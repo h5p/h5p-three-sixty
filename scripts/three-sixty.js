@@ -317,8 +317,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
-     * 
-     * @param {*} threeElement 
+     * Used to stop camera from centering on elements upon focus 
+     *
+     * @param {boolean} setPreventCameraMovement 
      */
     self.setPreventCameraMovement = (setPreventCameraMovement) => {
       self.preventCameraMovement = setPreventCameraMovement;
