@@ -321,15 +321,15 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      *
      * @param {boolean} setPreventCameraMovement 
      */
-    self.setPreventCameraMovement = (setPreventCameraMovement) => {
-      self.preventCameraMovement = setPreventCameraMovement;
+    this.setPreventCameraMovement = (setPreventCameraMovement) => {
+      this.preventCameraMovement = setPreventCameraMovement;
     };
 
     /**
      * Remove element from "CSS world"
      * @param {THREE.CSS3DObject} threeElement
      */
-    self.remove = function (threeElement) {
+    this.remove = function (threeElement) {
       threeElements.splice(threeElements.indexOf(threeElement), 1);
       cssScene.remove(threeElement);
     };
@@ -341,18 +341,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {Element} element
      * @return {THREE.CSS3DObject}
      */
-    self.find = (element) => 
+    this.find = (element) => 
       threeElements.find(threeElement => threeElement.element === element);
-
-    /**
-     * Find the index of the given element.
-     * TODO: Move into a separate collection handling class
-     *
-     * @param {Element} element
-     * @return {number}
-     */
-    self.indexOf = (element) =>
-      threeElements.findIndex(threeElement => threeElement.element === element);
 
     /**
      * Get the position the camera is currently pointing at
