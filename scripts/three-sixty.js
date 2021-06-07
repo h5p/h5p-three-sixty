@@ -1,5 +1,4 @@
 H5P.ThreeSixty = (function (EventDispatcher, THREE) {
-
   /**
    * Convert deg to rad
    * @return {number}
@@ -16,16 +15,15 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    *
    * @class H5P.ThreeSixty
    * @extends H5P.EventDispatcher
-   * @param {DOMElement} sourceElement video or image source
+   * @param {HTMLElement} sourceElement video or image source
    * @param {Object} options
    * @param {number} options.ratio Display ratio of the viewport
    * @param {Object} options.cameraStartPosition
    * @param {number} options.cameraStartPosition.yaw 0 = Center of image
    * @param {number} options.cameraStartPosition.pitch 0 = Center of image
    * @param {number} options.segments
-   * @param {Function} [sourceNeedsUpdate] Determines if the source texture needs to be rerendered.
    */
-  function ThreeSixty(sourceElement, options, sourceNeedsUpdate) {
+  function ThreeSixty(sourceElement, options) {
     /** @alias H5P.ThreeSixty# */
     var self = this;
 
@@ -48,6 +46,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     // consumer/user of this library.)
     const threeElements = [];
 
+    this.preventCameraMovement = false;
+
     /**
      * Help set up renderers and add them to the main wrapper element.
      *
@@ -66,26 +66,29 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      *
      * @param {string} label
      */
-   self.setAriaLabel = function (label) {
-      cssRenderer.domElement.setAttribute('aria-label', label);
-      cssRenderer.domElement.setAttribute('aria-role', 'document'); // TODO: Separate setting?
+    self.setAriaLabel = function (label) {
+      css2dRenderer.domElement.setAttribute('aria-label', label);
+      css2dRenderer.domElement.setAttribute('role', 'document'); // TODO: Separate setting?
+
+      css3dRenderer.domElement.setAttribute('aria-label', label);
+      css3dRenderer.domElement.setAttribute('role', 'document'); // TODO: Separate setting?
     };
 
     /**
      * Get the container of all the added 3D elements.
      * Useful when rendering via React.
      *
-     * @return {Element}
+     * @return {HTMLElement}
      */
-    self.getCameraElement = function () {
-      return cssRenderer.domElement;
+    self.getRenderers = function () {
+      return [css2dRenderer.domElement, css3dRenderer.domElement];
     };
 
     /**
      * Set focus to the scene.
      */
     self.focus = function () {
-      cssRenderer.domElement.focus();
+      css2dRenderer.domElement.focus();
     };
 
     /**
@@ -94,7 +97,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {boolean} enable
      */
     self.setTabIndex = function (enable) {
-      cssRenderer.domElement.tabIndex = (enable ? '0' : '-1');
+      css2dRenderer.domElement.tabIndex = (enable ? '0' : '-1');
+      css3dRenderer.domElement.tabIndex = (enable ? '0' : '-1');
     };
 
     /**
@@ -165,18 +169,28 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       sphere = null;
     };
 
-    var renderer = add(new THREE.WebGLRenderer());
+    const renderer = add(new THREE.WebGLRenderer());
 
     // Create a scene for our "CSS world"
-    var cssScene = new THREE.Scene();
+    const cssScene = new THREE.Scene();
 
-    var cssRenderer = add(new THREE.CSS2DRenderer);
-
+    const css2dRenderer = add(new THREE.CSS2DRenderer);
+    const css3dRenderer = add(new THREE.CSS3DRenderer);
+    css2dRenderer.domElement.classList.add('h5p-three-sixty-2d');
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-3d'); 
+    
     /**
      * Start rendering scene
      */
     self.startRendering = function () {
       if (renderLoopId === null) { // Prevents double rendering
+        window.requestAnimationFrame(() => {
+          // Since the 2D environment is rendered as "screen space overlay", it will always be "closest" to the camera.
+          // By putting the CSS3DRenderer as the first child of CSS2DRenderer, we retain events such as
+          // onClick, etc and pseudo-classes (hover etc) on all elements in scene
+          css2dRenderer.domElement.insertBefore(css3dRenderer.domElement, css2dRenderer.domElement.firstChild);
+        });
+        
         render();
       }
     };
@@ -236,20 +250,26 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     /**
      * Add element to "CSS 3d world"
      *
-     * @param {DOMElement} element
+     * @param {HTMLElement} element
      * @param {Object} startPosition
      * @param {boolean} enableControls
      */
     self.add = function (element, startPosition, enableControls) {
-      var threeElement = new THREE.CSS2DObject(element);
+      let threeElement;
+      if(element.classList.contains("render-in-3d")){
+        threeElement = new THREE.CSS3DObject(element);
+        threeElement.is3d = true;
+      } else {
+        threeElement = new THREE.CSS2DObject(element);
+      }
       threeElements.push(threeElement);
 
       // Reset HUD values
-      element.style.left = 0;
-      element.style.top = 0;
+      element.style.left = "0";
+      element.style.top = "0";
 
       if (enableControls) {
-        var elementControls = new PositionControls(self, element);
+        var elementControls = new PositionControls(element);
 
         // Relay and supplement startMoving event
         elementControls.on('movestart', function (event) {
@@ -282,9 +302,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
         // Move camera to element when tabbing
         element.addEventListener('focus', function (e) {
-          if (!e.defaultPrevented) {
+          if (!e.defaultPrevented && !self.preventCameraMovement) {
             self.setCameraPosition(-threeElement.rotation.y, threeElement.rotation.x);
           }
+          self.setPreventCameraMovement(false);
         }, false);
       }
 
@@ -296,10 +317,19 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     /**
+     * Used to stop camera from centering on elements upon focus 
+     *
+     * @param {boolean} setPreventCameraMovement 
+     */
+    this.setPreventCameraMovement = (setPreventCameraMovement) => {
+      this.preventCameraMovement = setPreventCameraMovement;
+    };
+
+    /**
      * Remove element from "CSS world"
      * @param {THREE.CSS3DObject} threeElement
      */
-    self.remove = function (threeElement) {
+    this.remove = function (threeElement) {
       threeElements.splice(threeElements.indexOf(threeElement), 1);
       cssScene.remove(threeElement);
     };
@@ -311,28 +341,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {Element} element
      * @return {THREE.CSS3DObject}
      */
-    self.find = function (element) {
-      for (let i = 0; i < threeElements.length; i++) {
-        if (threeElements[i].element === element) {
-          return threeElements[i];
-        }
-      }
-    };
-
-    /**
-     * Find the index of the given element.
-     * TODO: Move into a separate collection handling class
-     *
-     * @param {Element} element
-     * @return {number}
-     */
-    self.indexOf = function (element) {
-      for (let i = 0; i < threeElements.length; i++) {
-        if (threeElements[i].element === element) {
-          return i;
-        }
-      }
-    };
+    this.find = (element) => 
+      threeElements.find(threeElement => threeElement.element === element);
 
     /**
      * Get the position the camera is currently pointing at
@@ -381,10 +391,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Resize renderers
       renderer.setSize(self.element.clientWidth, self.element.clientHeight);
-      cssRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      css2dRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
+      css3dRenderer.setSize(self.element.clientWidth, self.element.clientHeight);
     };
-
-    var hasFirstRender;
 
     /**
      * @private
@@ -393,7 +402,8 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
       // Draw scenes
       renderer.render(scene, camera);
-      cssRenderer.render(cssScene, camera);
+      css2dRenderer.render(cssScene, camera);
+      css3dRenderer.render(cssScene, camera);
 
       // Prepare next render
       renderLoopId = requestAnimationFrame(render);
@@ -405,7 +415,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     };
 
     // Add camera controls
-    var cameraControls = new PositionControls(self, cssRenderer.domElement, 400, true, true);
+    var cameraControls = new PositionControls(css2dRenderer.domElement, 400, true, true);
 
     // Workaround for touchevent not cancelable when CSS 'perspective' is set.
     renderer.domElement.addEventListener('touchmove', function (e) { });
@@ -460,65 +470,10 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     });
 
     // Add approperiate styling
-    cssRenderer.domElement.classList.add('h5p-three-sixty-controls');
+    css2dRenderer.domElement.classList.add('h5p-three-sixty-controls');
+    css3dRenderer.domElement.classList.add('h5p-three-sixty-controls');
 
     var preventDeviceOrientation;
-    var qOrientation, qMovement, qNinety, euler, xVector, zVector;
-
-    /**
-     * Handle screen orientation change by compensating camera
-     *
-     * @private
-     */
-    var setOrientation = function () {
-      qOrientation.setFromAxisAngle(zVector, toRad(-(window.orientation || 0)));
-    };
-
-    /**
-     * Initialize orientation supported device
-     *
-     * @private
-     */
-    var initializeOrientation = function () {
-      qOrientation = new THREE.Quaternion();
-      qMovement = new THREE.Quaternion();
-      qNinety = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-      euler = new THREE.Euler();
-      xVector = new THREE.Vector3(1, 0, 0);
-      zVector = new THREE.Vector3(0, 0, 1);
-
-      // Listen for screen rotation
-      window.addEventListener('orientationchange', setOrientation, false);
-      setOrientation(); // Set default
-    };
-
-    /**
-     * Handle device groscope movement
-     *
-     * @param {DeviceOrientationEvent} event
-     */
-    var deviceOrientation = function (event) {
-      if (qOrientation === undefined) {
-        // Initialize on first orientation event
-        initializeOrientation();
-      }
-
-      if (preventDeviceOrientation) {
-        return;
-      }
-
-      // Adjust camera to reflect device movement
-      euler.set(toRad(event.beta), toRad(event.alpha) + cameraControls.getAlpha(), toRad(-event.gamma), 'YXZ');
-      camera.quaternion.setFromEuler(euler);
-      camera.quaternion.multiply(qNinety); // Shift camera 90 degrees
-      qMovement.setFromAxisAngle(xVector, -cameraControls.getBeta());
-      camera.quaternion.multiply(qMovement); // Compensate for movement
-      camera.quaternion.multiply(qOrientation); // Compensate for device orientation
-    };
-
-    // Add device orientation controls
-    // TODO: Fix
-    //window.addEventListener('deviceorientation', deviceOrientation, false);
   }
 
   // Extends the event dispatcher
@@ -529,13 +484,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
    * Class for manipulating element position using different controls.
    *
    * @class
-   * @param {Object} threeSixty
    * @param {THREE.Object3D} element
    * @param {number} [friction] Determines the speed of the movement
-   * @param {number} [invert] Needed to invert controls for camera
+   * @param {boolean} [shouldInvert] Needed to invert controls for camera
    * @param {boolean} [isCamera]
    */
-  function PositionControls(threeSixty, element, friction, invert, isCamera) {
+  function PositionControls(element, friction, shouldInvert, isCamera) {
     /** @type PositionControls# */
     var self = this;
 
@@ -546,7 +500,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
     if (!friction) {
       friction = 800; // Higher = slower
     }
-    invert = invert ? 1 : -1;
+    let invert = shouldInvert ? 1 : -1;
 
     var alpha = 0; // From 0 to 2pi
     var beta = 0; // From -pi/2 to pi/2
@@ -555,8 +509,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     var startPosition; // Where the element is when it starts moving
     var prevPosition;
-    var startAlpha; // Holds initial alpha value while control is active
-    var startBeta; // Holds initial beta value while control is active
 
     let keyStillDown = null; // Used to determine if a movement key is being held down.
 
@@ -567,7 +519,7 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {number} x Initial x coordinate
      * @param {number} y Initial y coordinate
      * @param {string} control Identifier
-     * @param {Event} e Original event
+     * @param {Event} [e] Original event
      * @return {boolean} If it's safe to start moving
      */
     var start = function (x, y, control, e) {
@@ -601,8 +553,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
       };
       alpha = 0;
       beta = 0;
-      startAlpha = alpha;
-      startBeta = beta;
 
       controlActive = control;
       return true;
@@ -660,8 +610,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {MouseEvent} event
      */
     var mouseDown = function (event) {
-      if (event.which !== 1) {
-        return; // Only react to left click
+      const isLeftClick = event.which === 1;
+      if (!isLeftClick) {
+        return;
       }
 
       if (!start(event.pageX, event.pageY, 'mouse', event)) {
@@ -783,8 +734,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @param {TouchEvent} event
      */
     var keyDown = function (event) {
-      if ([37, 100, 38, 104, 39, 102, 40, 98].indexOf(event.which) === -1) {
-        return; // Not an arrow key
+      const isArrowKey = [37, 100, 38, 104, 39, 102, 40, 98].includes(event.which);
+      if (!isArrowKey) {
+        return;
       }
 
       if (keyStillDown === null) {
@@ -848,9 +800,9 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
      * @private
      * @param {TouchEvent} event
      */
-    var focus = function (e) {
-      e.preventDefault();
-      e.target.focus({
+    var focus = function (event) {
+      event.preventDefault();
+      event.target.focus({
         preventScroll: true
       });
     }
