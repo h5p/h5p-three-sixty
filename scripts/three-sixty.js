@@ -288,6 +288,12 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
         }, false);
       }
 
+      threeElement.element.addEventListener('keyup', function (event) {
+        if (event.key == 'Tab') {
+          camera.lookAt(threeElement.position);
+        }
+      });
+
       // Set initial position
       ThreeSixty.setElementPosition(threeElement, startPosition);
 
