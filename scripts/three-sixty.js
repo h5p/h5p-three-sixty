@@ -172,6 +172,14 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
 
     var cssRenderer = add(new THREE.CSS2DRenderer);
 
+    // Prevent internal scrolling in the CSS 3d world.
+    cssRenderer.domElement.addEventListener('scroll', function (e) {
+      if (this.scrollTop !== 0 || this.scrollLeft !== 0) {
+        // Reset the scroll before the scene gets a chance to render
+        this.scrollTo(0, 0);
+      }
+    });
+
     /**
      * Start rendering scene
      */
@@ -287,12 +295,6 @@ H5P.ThreeSixty = (function (EventDispatcher, THREE) {
           }
         }, false);
       }
-
-      threeElement.element.addEventListener('keyup', function (event) {
-        if (event.key == 'Tab') {
-          camera.lookAt(threeElement.position);
-        }
-      });
 
       // Set initial position
       ThreeSixty.setElementPosition(threeElement, startPosition);
